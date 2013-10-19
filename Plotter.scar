@@ -1,0 +1,544 @@
+{=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
+// What is this: Plotter.scar is a part of SCARExt.. 
+//               It allows you to plot points
+// - SLACKY
+[=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
+type
+  TPlot = record 
+    BMP:TScarBitmap;
+    XNum: TIntegerArray;
+    YNum: TIntegerArray;
+    XMax,YMax,XMin,YMin: Integer;
+    PW,PH:Integer; 
+    W,H:Integer;
+    XPad,YPad:Integer; 
+    //Visual
+    ColorBG,ColorFG: Integer;
+    Color, LineColor, SplineColor: Integer; 
+    DrawLine, DrawDot, StrongDot, DrawSpline: Boolean;
+    SplineTension: Extended; 
+    Chars: T2DPointArray;
+    CharSize: TPointArray;
+    XText: TPointArray;
+    YText: TPointArray;
+  end;
+
+ 
+var
+  TPlotFontSize: Integer;
+  TPlotFont: Integer;  
+    
+  
+ 
+{*
+  Create a TPA of each char in the Txt.
+*}
+function ATPAFromText(Txt: string; chars: Integer; Pos:TPoint): T2DPointArray;
+var
+  x, y, r, i: Integer;
+  b: TSCARBitmap;
+begin
+  if (txt <> '') then
+  begin
+    SetLength(Result, Length(Txt));
+    for i:=1 to Length(Txt) do
+    begin
+      r := 0;            
+      b := CreateBitmapMaskFromText(txt[i], chars); 
+      SetLength(Result[i-1], (b.Width * b.Height));
+      for y := 0 to (b.Height - 1) do
+        for x := 0 to (b.Width - 1) do
+          if (b.Pixel[x, y] = 16777215) then
+          begin
+            Result[i-1][r].X := Pos.x+x;  
+            Result[i-1][r].Y := Pos.y+y;
+            r := (r + 1);
+          end;
+      SetLength(Result[i-1], r);   
+      b.Free;    
+    end;
+  end;
+end;
+
+
+
+{*
+  Used internally to create a TPA-Text form a string. 
+  It uses preloaded TPAs of chars to work quickly.
+*}
+function TPlotText(Plot:TPlot; Text: string; Pos:TPoint): TPointArray;
+var
+  x,i,id: Integer;
+  TPA:TPointArray;
+begin
+  x := 0;
+  SetLength(Result, 0);
+  for i:=1 to Length(Text) do
+  begin
+    try
+      id := Ord(Text[i]); 
+      TPA := CopyTPA(Plot.Chars[id]); 
+      XT_MoveTPA(TPA, Pos.x+x, Pos.y); 
+      Result := XT_UniteTPA(Result, TPA, False);
+      x := x + Plot.CharSize[id].x + 1;
+    except
+    end;
+  end;
+end;
+
+
+
+{*
+  When ever we plot new numbers we need to have it all sorted (x-wise).
+  This way we can combine old numbers with new numbers.
+*}
+procedure __TPlotSort(var Plot:TPlot); 
+var
+  Gap, CurIndex, TmpIndex, Len, tmp: Integer;
+begin
+  Len := Length(Plot.XNum);
+  Gap := 0;
+  while Gap < Len div 3 do
+    Gap := Gap * 3 + 1;
+    
+  while Gap >= 1 do
+  begin
+    for CurIndex := Gap to Len - 1 do
+    begin
+      TmpIndex := CurIndex;
+      while (TmpIndex >= Gap) and (Plot.XNum[TmpIndex] < Plot.XNum[TmpIndex - Gap]) do
+      begin 
+        tmp := Plot.XNum[TmpIndex];
+        Plot.XNum[TmpIndex] := Plot.XNum[TmpIndex - Gap];
+        Plot.XNum[TmpIndex - Gap] := tmp;
+        //Y must have same order.
+        tmp := Plot.YNum[TmpIndex];
+        Plot.YNum[TmpIndex] := Plot.YNum[TmpIndex - Gap];
+        Plot.YNum[TmpIndex - Gap] := tmp;
+        TmpIndex := TmpIndex - Gap;
+      end;
+    end;
+    Gap := Gap div 3;
+  end;
+end;
+ 
+  
+{*
+  This function Redraws the frame/image which we are to plot our numbers on.
+  So in other words.. it creates the axis, and fills am with text.
+*}
+procedure __TPlotRedraw(var Plot:TPlot; XMin,YMin:Integer);
+var 
+  TPA:TPointArray;
+  A,B,C,D:TPoint;
+  x,y,xjump,yjump: Single;
+  px,py,i,color,S:Integer;
+  strsize: Integer;
+begin
+  A := Point(Plot.XPad, Plot.YPad); 
+  B := Point(Plot.XPad, Plot.YPad+Plot.H);
+  C := Point(Plot.W+Plot.XPad, Plot.BMP.Height - Plot.YPad)
+  D := Point(Plot.W+Plot.XPad, Plot.YPad)
+  
+  XT_TPALine(TPA, A, B);
+  XT_TPALine(TPA, B, C);
+  XT_TPALine(TPA, A, D);
+  XT_TPALine(TPA, D, C);
+  Plot.BMP.SetPixels(TPA, $707070); 
+  SetLength(TPA, 0);
+                                                           
+  //Font defined as ??px width + 5px padding.
+  strsize := Max(TPlotFontSize, (TPlotFontSize+3) * (Length(IntToStr(Plot.XMax))-1)); 
+  
+  //Draw X-Axis numbs:  
+  xjump := (Plot.PW) / Max(1,(Plot.W div strsize))
+  py := (Plot.H + Plot.YPad + 1);   
+  
+  while X <= Plot.W do
+  begin
+    px := (Plot.XPad + Floor(x))                          
+    TPA := TPlotText(Plot, IntToStr(XMin + Round(i*xjump)), Point(px - TPlotFontSize shr 1, py)); 
+    if (X + strsize - 3) > Plot.BMP.Width then Break; 
+    color := $AAAA00;
+    if (i mod 2 = 0) then color := $00AA00; 
+    
+    Plot.BMP.SetPixels(TPA, color);
+    Plot.BMP.Pixel[px,py-1] := 255;
+    Plot.BMP.Pixel[px,py] := 255; 
+    
+    x := (x + strsize); 
+    inc(i);
+  end;
+  
+  //Draw Y-Axis numbs: 
+  S := Plot.XPad - 5;
+  //Font height is defined as (2 * TPlotFontSize).
+  strsize := (TPlotFontSize*2);
+  yjump := Plot.PH / (Plot.H div strsize);
+  i := 0;
+  px := 5;
+  while Y <= Plot.H do
+  begin                                                     
+    py := Plot.H - Floor(Y) + Plot.YPad;
+    //TPA := TPAFromText(IntToStr(YMin + Round(i * yjump)), TPlotFont, Point(px, py - TPlotFontSize shr 1));
+    TPA := TPlotText(Plot, IntToStr(YMin + Round(i * yjump)), Point(px, py - TPlotFontSize shr 1));
+    color := $AAAA00;
+    if (i mod 2 = 0) then color := $00AA00; 
+    Plot.BMP.SetPixels(TPA, color);                         
+    Plot.BMP.Pixel[S+px,py] := 255;
+    Plot.BMP.Pixel[S+px-1,py] := 255; 
+    y := (y + strsize); 
+    inc(i);
+  end;
+  SetLength(TPA, 0);
+  
+  //Draw X and Y-axis text:
+  if Length(Plot.XText) >= 1 then   
+    try Plot.BMP.SetPixels(Plot.XText, 1659884); except end;
+  if Length(Plot.YText) >= 1 then
+    try Plot.BMP.SetPixels(Plot.YText, 1659884); except end;
+end;
+
+
+{*
+  This function draws the points on the our plot.
+*}
+procedure __TPlotDrawPoints(var Plot:TPlot);
+var
+  i,px,py:Integer;
+  xratio,yratio:Single;
+  TPA:TPointArray;
+  priv:TPoint;
+begin
+  if (Length(Plot.XNum) > 0) then
+  begin 
+    YRatio := Plot.H / Plot.PH;
+    XRatio := Plot.W / Plot.PW;
+    
+    if Plot.DrawSpline then
+    begin
+      SetLength(TPA, Length(Plot.XNum)); 
+      for i:=0 to High(Plot.XNum) do
+      begin
+        PX := (Plot.XPad) + Ceil((Plot.XNum[i]-Plot.XMin)*XRatio);
+        PY := (Plot.H + Plot.YPad) - Ceil((Plot.YNum[i]-Plot.YMin)*YRatio); 
+        TPA[i] := Point(PX, PY);
+      end; 
+      TPA := XT_CSpline(TPA, Plot.SplineTension, True);
+      XT_TPAFilterBounds(TPA, Plot.XPad, Plot.YPad, Plot.W+Plot.XPad, Plot.H+Plot.YPad); 
+      Plot.BMP.SetPixels(TPA, Plot.SplineColor);
+      SetLength(TPA, 0);
+    end;
+    
+    for i:=0 to High(Plot.XNum) do
+    begin
+      PX := (Plot.XPad) + Ceil((Plot.XNum[i]-Plot.XMin)*XRatio);
+      PY := (Plot.H + Plot.YPad) - Ceil((Plot.YNum[i]-Plot.YMin)*YRatio); 
+      if (i>0) and Plot.DrawLine then 
+      begin 
+        XT_TPALine(TPA, priv, Point(PX,PY));
+        XT_TPAFilterBounds(TPA, Plot.XPad, Plot.YPad, Plot.W+Plot.XPad, Plot.H+Plot.YPad);
+        Plot.BMP.SetPixels(TPA, Plot.LineColor);
+        SetLength(TPA, 0);
+      end;
+      
+      if (Plot.DrawDot) then
+      begin
+        if (px >= Plot.XPad) and (py >= Plot.YPad) then
+        if (px < Plot.W+Plot.XPad) and (py < Plot.H+Plot.YPad) then 
+        begin
+          if Plot.StrongDot then
+          begin 
+            Plot.BMP.Pixel[px, py] := Plot.Color; 
+            Plot.BMP.Pixel[px-1, py] := Plot.Color;
+            Plot.BMP.Pixel[px, py-1] := Plot.Color;
+            Plot.BMP.Pixel[px, py+1] := Plot.Color;
+            Plot.BMP.Pixel[px+1, py] := Plot.Color; 
+            Plot.BMP.Pixel[px-1, py-1] := Plot.Color;
+            Plot.BMP.Pixel[px+1, py-1] := Plot.Color;
+            Plot.BMP.Pixel[px-1, py+1] := Plot.Color;
+            Plot.BMP.Pixel[px+1, py+1] := Plot.Color;
+          end else
+            Plot.BMP.Pixel[px, py] := Plot.Color;  
+        end;
+      end;
+      priv := Point(PX,PY);  
+    end;
+  end;
+end;
+
+
+
+{*
+  ******* Important *******
+  This is the function used to create a new plot.
+  Parameters are simple.
+  >> Width, Height = The maximum numbers (X, and Y-axis).
+  >> FontSize.. The size of the numbers, 8-10 should be good.
+*}
+function TPlotCreate(Width,Height: Integer; FontSize: Integer): TPlot;
+var 
+  chars:String;
+  TMP: T2DPointArray;
+  i,id,w,h:Integer;
+begin
+  TPlotFontSize := Min(14,FontSize);
+  TPlotFont := LoadCharsFromFont2('Times', TPlotFontSize, False, False, False, False); //Don't change.
+  Result.W := 510;
+  Result.H := 290;
+  Result.XPad := Max(30, TPlotFontSize * (Length(IntToStr(Width))));
+  Result.YPad := Max(35, TPlotFontSize*2);
+  //Result.YPad := 30;  
+  Result.PW := Width;
+  Result.PH := Height;
+  Result.XMax := Width;
+  Result.YMax := Height;
+  Result.XMin := 0;
+  Result.YMin := 0;
+  Result.BMP := TSCARBitmap.Create('');
+  Result.BMP.SetSize(Result.W+(Result.XPad*2), Result.H+(Result.YPad*2));
+  
+  //Default colors   
+  Result.ColorBG := 0;
+  Result.ColorFG := 0;
+  Result.Color := $757575;
+  Result.LineColor := $555555;
+  Result.SplineColor := $999999; 
+  Result.DrawLine := True;
+  Result.DrawSpline := False;
+  Result.DrawDot := True;
+  Result.StrongDot := True;
+  Result.SplineTension := 0.75;
+  
+  //Initlialize chars:  
+  chars := 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>+-_()%:;=*.,^~/\[]#"!?';
+  TMP := ATPAFromText(chars, TPlotFont, Point(0,0));
+  SetLength(Result.Chars, 255);
+  SetLength(Result.CharSize, 255);
+  for i:=0 to High(TMP) do 
+  begin 
+    id := Ord(chars[i+1]);
+    Result.Chars[id] := TMP[i]; 
+    TPADimensions(Result.Chars[id],W,H);
+    Result.CharSize[id] := Point(W,H);
+  end;
+  SetLength(TMP, 0);
+  
+  //Plot
+  __TPlotRedraw(Result,0,0);
+end;
+
+
+{*
+  ******* Important *******
+  You must call this when the script is stopped! 
+  This is simply to avoid using up all your memory.
+*}
+procedure TPlotFree(Plot: TPlot);
+begin
+  Plot.BMP.Free;
+  SetLength(Plot.XNum, 0);
+  SetLength(Plot.YNum, 0); 
+  SetLength(Plot.chars, 0);
+  SetLength(Plot.charsize, 0);
+  SetLength(Plot.XText, 0);
+  SetLength(Plot.YText, 0);
+end;
+
+
+{*
+  Mostly used internally.. But you can call it if needed.
+*}
+procedure TPlotShow(MyPlot: TPlot);
+begin
+  DebugBitmap(MyPlot.BMP);
+end;
+
+
+{*
+  With this lovely function, you may change the background color of the chart! 
+*}
+procedure TPlotSetBG(var Plot: TPlot; Color:Integer; Inner:Boolean);
+var
+  TPA:TPointArray;
+begin
+  
+  if Inner = False then 
+  begin
+    Plot.ColorBG := Color;  
+    Plot.ColorFG := Color;
+    Plot.BMP.Clear(Color);
+  end else 
+  begin  
+    Plot.ColorFG := Color;
+    TPA := TPAFromBox(Box(Plot.XPad,Plot.YPad, Plot.XPad+Plot.W, Plot.YPad+Plot.H));
+    Plot.BMP.SetPixels(TPA, Color);
+    SetLength(TPA, 0);
+  end;
+  __TPlotRedraw(Plot, Plot.XMin, Plot.YMin); 
+  __TPlotDrawPoints(Plot); 
+  TPlotShow(Plot);
+end;
+
+
+{*
+  I have made this simple function to allow you to name both your axis..
+  But you should know that if you plot (image) is small then this might just go out of bounds.
+  If it goes out of bounds the text will not be written.
+*}
+procedure TPlotSetAxisText(var Plot: TPlot; XName, YName:String);
+begin
+  SetLength(XName, Min(25, Length(XName)));
+  SetLength(YName, Min(25, Length(YName)));
+  Plot.XText := TPlotText(Plot, XName, Point(Plot.W div 2, (Plot.H + Plot.YPad)+16));
+  Plot.YText := TPlotText(Plot, YName, Point(5, Plot.YPad div 4));
+end;
+
+
+{*
+  This function allows you to choose you own size for the plot.
+*}
+procedure TPlotSetSize(var Plot: TPlot; W,H:Integer);
+begin
+  Plot.W := W;
+  Plot.H := H;
+  Plot.XMax := W;
+  Plot.YMax := H; 
+  Plot.XMin := 0;
+  Plot.YMin := 0;
+  Plot.BMP.SetSize(W+(Plot.XPad*2), H+(Plot.YPad*2));
+end;
+
+
+{*
+  This function is important if you wish to do live plotting! 
+  It is used to clear out all numbers less then the maximum number minus the Range.
+  If FilterY is set to False then it wont clear the Y-Axis.
+*}
+procedure TPlotClearRange(var Plot: TPlot; RangeX, RangeY:Integer; FilterY:Boolean);
+var
+  i,j,low,Hi,H: Integer;
+begin
+  if (Length(Plot.XNum) > 0) then
+  begin
+    j := 0;
+    H := High(Plot.XNum);
+    Low := Max((Plot.XNum[H] - RangeX), Plot.XNum[0]);
+    Hi := Plot.XNum[H]; 
+    for i:=0 to H do 
+    begin
+      if (Plot.XNum[i] >= Low) then
+      begin
+        Plot.XNum[j] := Plot.XNum[i]; 
+        Plot.YNum[j] := Plot.YNum[i];
+        Inc(j); 
+      end;
+    end; 
+    SetLength(Plot.XNum, j);
+    SetLength(Plot.YNum, j);
+
+    Plot.XMin := Plot.XNum[0];
+    Plot.XMax := Hi + (RangeX div 4);
+    Plot.PW := Max(1,(Plot.XMax - Plot.XMin)); 
+    if FilterY then
+    begin 
+      Plot.YMin := Max((Plot.YNum[j-1] - RangeY), Plot.YMin);  
+      Plot.YMax := Plot.YMin + RangeY;
+      Plot.PH := Max(1,(Plot.YMax - Plot.YMin));  
+    end; 
+  end;
+end;
+
+
+{*
+  WARNING: Not completed!
+*}
+procedure TPlotClearLength(var Plot: TPlot; Len:Integer);
+var
+  i,j,M,S:Integer;
+begin
+  if (Length(Plot.XNum) > 0) then
+  begin    
+    S := Max(0,High(Plot.XNum)-Len); 
+    for i:=S to High(Plot.XNum) do 
+    begin 
+      Plot.XNum[i-S] := Plot.XNum[i];
+      Plot.YNum[i-S] := Plot.YNum[i]; 
+      Inc(j);
+    end; 
+    SetLength(Plot.XNum, j);
+    SetLength(Plot.YNum, j);
+    
+    M := Plot.XNum[0];
+
+    Plot.XMin := Plot.XNum[0];
+    Plot.YMin := Plot.YNum[0];
+    Plot.PW := (Plot.XMax - Plot.XMin);
+    Plot.PH := (Plot.YMax - Plot.YMin);
+  end;
+end;
+
+
+{*
+  ?? Name change ??
+  Used to add points to the plotter.
+  I assume the X, and Y paramters have the same size.. If not only the shortest
+  of am will be itterated over.
+  Color parameter lets you choose a color that the points will have.
+*}
+procedure TPlotAddPoints(var Plot: TPlot; X,Y:TIntArray);
+var
+  i,j,XMax,YMax,XMin,YMin,W,H: Integer; 
+  L,OldL:integer;
+begin
+  //Addapt to new lowest, and new highest!
+  XT_MinMaxTIA(X, XMin, XMax); 
+  XT_MinMaxTIA(Y, YMin, YMax);
+  if XMax > Plot.XMax then Plot.XMax := XMax;
+  if YMax > Plot.YMax then Plot.YMax := YMax;
+  if XMin < Plot.XMin then Plot.XMin := XMin;
+  if YMin < Plot.YMin then Plot.YMin := YMin;
+  Plot.PW := (Plot.XMax - Plot.XMin);
+  Plot.PH := (Plot.YMax - Plot.YMin);
+  Plot.XPad := Max(30, TPlotFontSize * (Length(IntToStr(Plot.YMax))));
+ 
+  //Redraw picture...  
+  W := Plot.W+(Plot.XPad*2); 
+  H := Plot.H+(Plot.YPad*2);
+  if (W <> Plot.BMP.width) or (H <> Plot.BMP.height) then
+    Plot.BMP.SetSize(W,H);
+  
+  Plot.BMP.Clear(Plot.ColorBG); 
+  Plot.BMP.SetPixels(TPAFromBox(Box(Plot.XPad,Plot.YPad, Plot.XPad+Plot.W, Plot.YPad+Plot.H)), Plot.ColorFG);
+  __TPlotRedraw(Plot, Plot.XMin, Plot.YMin); 
+  
+  //Add old points (which are in range)! 
+  OldL := Min(Length(Plot.XNum), Length(Plot.YNum));
+  j := 0;
+  for i:=0 to OldL-1 do
+  begin
+    if (Plot.XNum[i] >= Plot.XMin) then 
+    begin
+      Plot.XNum[j] := Plot.XNum[i];
+      Plot.YNum[j] := Plot.YNum[i];
+      Inc(j);
+    end;  
+  end;
+  SetLength(Plot.XNum, j);
+  SetLength(Plot.YNum, j);  
+
+  //Add new points! 
+  L := Min(High(X), High(Y));
+  SetLength(Plot.XNum, j + L + 1); 
+  SetLength(Plot.YNum, j + L + 1); 
+  for i:=0 to L do
+  begin 
+    Plot.XNum[i+j] := X[i]; 
+    Plot.YNum[i+j] := Y[i]; 
+  end;
+  
+  //Must sort it to get it correct.. blah..
+  __TPlotSort(Plot);
+  __TPlotDrawPoints(Plot);
+  TPlotShow(Plot);
+end;

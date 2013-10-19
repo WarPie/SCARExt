@@ -1,0 +1,145 @@
+{$L SCARExt.dll}
+{=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
+|| What is this: In short I would define SCAREXT as a grabage collection.
+|| At it current state, it's just a big pile of mess =)
+|| - SLACKY
+[=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
+{$I Plotter.scar}
+
+{=-=-=-=-=-=-=-= SCARExt.dll contains the following functions -=-=-=-=-=-=-=-=]
+|| Close to every function we got start with `XT_`. So to find am do:
+|| Load this include file in SCAR, write `XT_` then press Ctrl+Space ;)
+||
+|| Plus the plotting lib: TPlot!
+[=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
+type
+  XT_MatchAlgo = (LAB, LCH);
+
+
+{*
+ Copy the client area as bitmap from X->Y2
+*}
+function XT_ScreenAreaBMP(XS,YS,XE,YE: Integer): TSCARBitmap;
+begin 
+  Result := GetClient.CaptureEx(XS,YS,XE,YE); 
+end;
+
+
+{*
+ ....
+*}
+procedure XT_ClientSize(var Width, Height: Integer);
+begin
+  GetBoxSize(GetClient.ImageArea, Width, Height);
+end;
+
+
+{*
+ Get all pixels (2D-array) from an area defined by TBox..
+*}
+function XT_Bmp2Array(BMP: TSCARBitmap; DoFree:Boolean): T2DIntArray;
+var TIA:TIntArray;
+begin
+  TIA := BMP.GetPixels(TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1)))
+  Result := XTCore_TIAToATIA(TIA, BMP.Width,  BMP.Height);
+  if DoFree then BMP.Free;
+end;
+
+{function BMPSetData(bmp: TSCARBitmap; Matrix:T2DIntArray);
+var W,H,i:Integer;
+begin
+  W := Length(Matrix[0]); 
+  H := Length(Matrix);
+  bmp.SetSize(W,H);
+  for i:=0 to (H-1) do   
+  begin 
+    TPA := TPAFromBox(Box(0, y, W-1, y);
+    bmp.SetPixelsEx(TPA, XT_ATIAGetIndices(Matrix,TPA))
+  end;
+end;}
+
+
+(*
+  Fills the TPA with the found colors. It currently supports two algorithms CIE-LAB, and CIE-LCH.
+  For CIE-LCH:
+    ATol = Tolerance for Chroma, and Lightness. It maxes at 142.
+    BTol = Tolerance for Hue. It maxes at 180.
+
+  For CIE-LAB:
+   ATol = Tolerance for A and B, they meassure the Chroma and Hue. It maxes at 142.
+   BTol = Tolerance for Lightness. It maxes at 100.
+*)
+function XT_FindColorTolEx(var TPA:TPointArray; Color:Integer; XS,YS,XE,YE:Integer; ATol,BTol:Integer; MatchAlgo: XT_MatchAlgo): Boolean;
+var 
+  W,H:Integer;
+  Img:T2DIntArray;
+begin
+  Result := False;
+  XT_ClientSize(W,H); 
+  if (XE > W) or (XE = -1) then XE := W;
+  if (YE > H) or (YE = -1) then YE := H;
+  if (XS > XE) or (YS > YE) then Exit;
+  
+  Img := XT_Bmp2Array(XT_ScreenAreaBMP(XS,YS,XE,YE), true);
+  case MatchAlgo of 
+    LAB: Result := XTCore_FindColorTolExLAB(Img, TPA, Color, ATol, BTol);
+    LCH: Result := XTCore_FindColorTolExLCH(Img, TPA, Color, ATol, BTol);
+  end;
+  SetLength(Img, 0);
+  if (XS=0) and (YS=0) then Exit;
+  XT_MoveTPA(TPA,XS,YS);
+  
+end;
+
+
+{*
+ ....
+*}
+function XT_BMPFindEdges(BMP:TSCARBitmap; MinDiff:Integer; GrayScale:Boolean): TPointArray;
+var 
+  Img:T2DIntArray;
+  W,H:Integer;
+begin
+  XT_ClientSize(W,H);
+  Img := XT_Bmp2Array(XT_ScreenAreaBMP(0,0,W,H), True);
+  case GrayScale of
+    True:  Result := XT_ContrastEdgesGray(Img, MinDiff);
+    False: Result := XT_ContrastEdges(Img, MinDiff);
+  end;
+  SetLength(Img, 0);
+end;
+
+
+{*
+ ....
+*}
+procedure XT_BMPContrastFilter(var BMP:TSCARBitmap; MinDiff:Integer; Split:Integer);
+var 
+  TPA,TMP: TPointArray; 
+  Cluster: T2DPointArray;
+  Img: T2DIntArray;
+  i: Integer;
+begin
+  Img := XT_Bmp2Array(BMP, False); 
+
+  Cluster := XT_ClusterTPA(XT_ContrastEdges(Img, MinDiff), Split, True);
+  
+  SetLength(TPA, 0); 
+  for i:=0 to High(Cluster) do
+  begin   
+    SetLength(TMP, 0);
+    TMP := XT_TPAExtractShape(Cluster[i], Split*2, 1);
+    if Length(TMP) > 0 then
+    begin
+      TMP := XT_FloodFillPolygon(TMP, True);
+      TPA := XT_UniteTPA(TPA, TMP, False);
+    end;
+  end;
+  BMP.SetPixels(XT_InvertTPA(TPA), 0);
+  
+  SetLength(Img, 0); 
+  SetLength(TPA, 0);
+  SetLength(TMP, 0);
+  SetLength(Cluster, 0);  
+end;
+

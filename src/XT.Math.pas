@@ -243,15 +243,10 @@ end;
 {=================================== GENERAL ==================================}
 {==============================================================================}
 function IsPrime(n: Integer): Boolean; Inline;
-<<<<<<< HEAD
 var i:Integer; Hi: Single;
-=======
-var 
-  i:Integer; Hi: Single;
->>>>>>> Added TPASkeleton in XT.Points.pas
 begin
   if (n = 2) then Exit(True);
-  if (n mod 2 = 0) or (n=1) then Exit(False);
+  if (n mod 2 = 0) or (n<=1) then Exit(False);
   Hi := Sqrt(n)+1;
   i := 3;
   while i <= Hi do begin

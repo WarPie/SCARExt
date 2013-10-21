@@ -11,17 +11,21 @@ uses
   System.Types, System.SysUtils;
 
 type
-  TPoint = record x,y:Integer; end;
+  TPoint = Packed record X,Y: LongInt; end;
   TPointArray = array of TPoint;
   T2DPointArray = array of TPointArray;
   T3DPointArray = array of T2DPointArray;
   
-  TFPoint = record x,y:Extended; end;
+  TFPoint = Packed record X,Y:Extended; end;
   TFPointArray = Array of TFPoint;
   
   TIntArray = array of Integer;
   T2DIntArray = array of TIntArray;
   T3DIntArray = array of T2DIntArray;
+
+  TByteArray = array of Byte;
+  T2DByteArray = array of TByteArray;
+  T3DByteArray = array of T2DByteArray;  
   
   TBoolArray = array of Boolean;
   T2DBoolArray = array of TBoolArray;
@@ -32,11 +36,11 @@ type
   T3DExtArray = array of T2DExtArray;
   
   (* Not SCAR compatible - Don't export*)
-  TBox = record
-    X1: Integer;
-    Y1: Integer;
-    X2: Integer;
-    Y2: Integer;
+  TBox = Packed record
+    X1: LongInt;
+    Y1: LongInt;
+    X2: LongInt;
+    Y2: LongInt;
   end;
   TBoxArray = Array of TBox;
 

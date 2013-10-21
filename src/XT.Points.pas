@@ -1164,13 +1164,14 @@ begin
   if ((p8 = 0) and (p9 = 1)) then Inc(Result);
   if ((p9 = 0) and (p2 = 1)) then Inc(Result);
 end;
+
 function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; StdCall;
 var
-  i,j,x,y,h,transit,condA,condB,sumn: Integer;
+  j,i,x,y,h,transit,sumn,SwapHigh,hits: Integer;
   p2,p3,p4,p5,p6,p7,p8,p9:Integer;
-  Change1,Change2: Integer;
-  Change,PTS: TPointArray;
-  Matrix: T2DIntArray;
+  Change, PTS: TPointArray;
+  Matrix: T2DByteArray;
+  iter : Boolean;
   Area: TBox;
 begin
   Area := GetTPABounds(TPA);
@@ -1180,17 +1181,16 @@ begin
   Area.y2 := (Area.y2 - Area.y1) + 2;
   SetLength(Matrix, Area.y2, Area.x2);
   H := High(TPA);
-  SetLength(PTS, H+1);
   if (FMin = -1) then FMin := 2;
   if (FMax = -1) then FMax := 6;
-
-  if (FMin > FMax) then
-  begin
+  
+  if (FMin > FMax) then begin
     i := FMax;
     FMax := FMin;
     FMin := i;
   end;
 
+  SetLength(PTS, H + 1);
   for i:=0 to H do
   begin
     x := (TPA[i].x-Area.x1);
@@ -1198,95 +1198,63 @@ begin
     PTS[i] := Point(x,y);
     Matrix[y][x] := 1;
   end;
-
+  j := 0;
+  SwapHigh := H;
   SetLength(Change, H+1);
   repeat
-    Change1 := 0;
-    for i:=0 to H do
-    begin
+    iter := (J mod 2) = 0;
+    Hits := 0;
+    i := 0;
+    while i < SwapHigh do begin
       x := PTS[i].x;
       y := PTS[i].y;
-      if (Matrix[y][x] = 0) then
-        Continue;
-
-      p2 := Matrix[y-1][x];    //Adjecents in order!
+      p2 := Matrix[y-1][x];
       p4 := Matrix[y][x+1];
       p6 := Matrix[y+1][x];
       p8 := Matrix[y][x-1];
+
+      if (Iter) then begin
+        if (((p4 * p6 * p8) <> 0) or ((p2 * p4 * p6) <> 0)) then begin
+          Inc(i);
+          Continue;
+        end;
+      end else if ((p2 * p4 * p8) <> 0) or ((p2 * p6 * p8) <> 0) then
+      begin
+        Inc(i);
+        Continue;
+      end;
+
       p3 := Matrix[y-1][x+1];
       p5 := Matrix[y+1][x+1];
       p7 := Matrix[y+1][x-1];
       p9 := Matrix[y-1][x-1];
-
-      CondA := (p2 * p4 * p6);
-      CondB := (p4 * p6 * p8);
-
-      if ((condB = 0) and (condA = 0)) then
-      begin
-        Sumn := (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9);
-        if (Sumn >= FMin) and (sumn <= FMax) then begin
-          Transit := __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9);
-          if (Transit = 1) then begin
-            Change[Change1] := Point(x,y);
-            Inc(Change1);
-          end;
+      Sumn := (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9);
+      if (SumN >= FMin) and (SumN <= FMax) then begin
+        Transit := __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9);
+        if (Transit = 1) then begin
+          Change[Hits] := PTS[i];
+          Inc(Hits);
+          PTS[i] := PTS[SwapHigh];
+          PTS[SwapHigh] := Point(x,y);
+          Dec(SwapHigh);
+          Continue;
         end;
       end;
+      Inc(i);
     end;
 
-    for i:=0 to (Change1-1) do
+    for i:=0 to (Hits-1) do
       Matrix[Change[i].y][Change[i].x] := 0;
 
-    Change2 := 0;
-    for i:=0 to H do
-    begin
-      x := PTS[i].x;
-      y := PTS[i].y;
-      if (Matrix[y][x] = 0) then
-        Continue;
+    inc(j);
+  until ((Hits=0) and (Iter=False));
 
-      p2 := Matrix[y-1][x];    //Adjecents in order!
-      p4 := Matrix[y][x+1];
-      p6 := Matrix[y+1][x];
-      p8 := Matrix[y][x-1];
-      p3 := Matrix[y-1][x+1];
-      p5 := Matrix[y+1][x+1];
-      p7 := Matrix[y+1][x-1];
-      p9 := Matrix[y-1][x-1];
+  SetLength(Result, (SwapHigh + 1));
+  for i := 0 to SwapHigh do
+    Result[i] := Point(PTS[i].x+Area.x1, PTS[i].y+Area.y1);
 
-      CondA := (p2 * p6 * p8);
-      CondB := (p2 * p4 * p8);
-
-      if ((CondB = 0) and (CondA = 0)) then
-      begin
-        Sumn := (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9);
-        if (Sumn >= FMin) and (sumn <= FMax) then begin
-          Transit := __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9);
-          if (transit = 1) then begin
-            Change[Change2] := Point(x,y);
-            Inc(Change2);
-          end;
-        end;
-      end;
-    end;
-    for i:=0 to (change2-1) do
-      Matrix[Change[i].y][Change[i].x] := 0;
-
-  until ((change1=0) and (change2=0));
-
-  j := 0;
-  SetLength(Result, h+1);
-  for i:=0 to H do
-  begin
-    if Matrix[PTS[i].y][PTS[i].x] = 1 then
-    begin
-      Result[j] := TPA[i];
-      Inc(j)
-    end;
-  end;
-  SetLength(Result, j);
-  SetLength(Change, 0);
   SetLength(PTS, 0);
+  SetLength(Change, 0);
   SetLength(Matrix, 0);
 end;
 

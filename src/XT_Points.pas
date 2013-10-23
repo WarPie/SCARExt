@@ -15,9 +15,11 @@ function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
 procedure TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
 procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
 function GetTPAMax(const TPA: TPointArray): TPoint;
-function GetTPAMiddle(const TPA: TPointArray): TPoint;
 function GetTPABounds(const TPA: TPointArray): TBox;
+function GetTPAMean(const TPA: TPointArray): TPoint;
+function GetTPAMiddle(const TPA: TPointArray): TPoint;
 function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
+function GetTPABBox(TPA:TPointArray): TPointArray; StdCall;
 procedure GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean); Inline; StdCall;
 procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPoint); Inline;
 procedure ReverseTPA(var TPA: TPointArray); StdCall;
@@ -242,6 +244,88 @@ begin
     Result.Y := B.Y1 + ((B.Y2 - B.Y1) div 2);
   end else
     Result := Point(0, 0);
+end;
+
+
+{*
+ Returns the minimum bounding rectangle around the given TPA.
+*}
+function GetTPABBox(TPA:TPointArray): TPointArray; StdCall;
+var
+  L,i,j,v,c,edge_x,edge_y,w,h:Integer; 
+  halfpi,X,Y,cosA,cosAP,CosAM: Extended;
+  xl,yl,xh,yh,Area,Angle:Extended; 
+  Shape:TPointArray;
+  Angles,BBox:TExtArray;
+  added:Boolean;
+  pt:TPoint;
+begin
+  SetLength(Result, 4); 
+  if Length(TPA) <= 1 then Exit;
+  Shape := ConvexHull(TPA);
+  L := Length(Shape) - 1;
+  halfpi := (PI/2);
+  SetLength(angles, L);
+  
+  j := 0;    
+  for i:=0 to (L-1) do
+  begin
+    Angles[j] := PI; //Init with number greater then halfpi
+    Added := False;
+    edge_x := Shape[i+1].x - Shape[i].x;
+    edge_y := Shape[i+1].y - Shape[i].y; 
+    Angle := Abs(Modulo(ArcTan2(edge_y, edge_x), halfpi));
+    for c:=0 to j do
+      if (angles[c] = Angle) then Added := True; 
+    if not(Added) then begin 
+      angles[j] := Angle;
+      Inc(j);
+    end;     
+  end;                    
+  SetLength(angles, j); 
+  SetLength(BBox, 6);
+  BBox[1] := MaxInt;
+  for i:=0 to j-1 do
+  begin  
+    CosA := Cos(angles[i]);
+    CosAP := Cos(angles[i]+halfpi);
+    CosAM := Cos(angles[i]-halfpi);
+    xl := (CosA*shape[0].x) + (CosAM*shape[0].y); 
+    yl := (CosAP*shape[0].x) + (CosA*shape[0].y);
+    xh := xl;
+    yh := yl;
+    for v:=0 to L do
+    begin
+      pt := shape[v];
+      x  := (cosA*pt.x) + (cosAM*pt.y); 
+      y  := (cosAP*pt.x) + (cosA*pt.y);
+      if (x > xh) then xh := x
+      else if (x < xl) then xl := x;
+      if (y > yh) then yh := y
+      else if (y < yl) then yl := y;
+    end;
+    Area := (xh-xl)*(yh-yl);
+    if (Area < bbox[1]) then begin
+      BBox[0] := Angles[i];
+      BBox[1] := Area;
+      BBox[2] := xl;
+      BBox[3] := xh;
+      BBox[4] := yl;
+      BBox[5] := yh;
+    end;
+  end;
+  Angle := bbox[0];   
+  cosA  := Cos(Angle);
+  cosAP := Cos(Angle+halfpi);
+  cosAM := Cos(Angle-halfpi);
+  xl := bbox[2];
+  xh := bbox[3];
+  yl := bbox[4];
+  yh := bbox[5];
+  Result[0] := Point(Round((cosAP*yl) + (cosA*xh)), Round((cosA*yl) + (cosAM*xh)));
+  Result[1] := Point(Round((cosAP*yl) + (cosA*xl)), Round((cosA*yl) + (cosAM*xl)));
+  Result[2] := Point(Round((cosAP*yh) + (cosA*xl)), Round((cosA*yh) + (cosAM*xl)));
+  Result[3] := Point(Round((cosAP*yh) + (cosA*xh)), Round((cosA*yh) + (cosAM*xh)));
 end;
 
 
@@ -474,8 +558,9 @@ var
   A,B:TPoint;
 begin
   case Method of
-    Extremes:Shape := GetTPAExtremes(TPA);
-    Convex:  Shape := ConvexHull(TPA);
+    AM_Extremes:Shape := GetTPAExtremes(TPA);
+    AM_Convex:  Shape := ConvexHull(TPA);
+    AM_BBox:    Shape := GetTPABBox(TPA);
   end;
   LongestPolyVector(Shape, A,B);
   Angle := ArcTan2(-(B.y-A.y),(B.x-A.x));

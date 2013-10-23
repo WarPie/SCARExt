@@ -45,7 +45,7 @@ type
   TBoxArray = Array of TBox;
 
   //
-  TAlignMethod = (Extremes, Convex);
+  TAlignMethod = (AM_Extremes, AM_Convex, AM_BBox);
 
 
 function Box(const x1,y1,x2,y2:Integer): TBox; Inline;

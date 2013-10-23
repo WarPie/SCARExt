@@ -100,6 +100,8 @@ begin
   AddCommand(@TPASeparateAxis, 'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
   AddCommand(@GetTPAExtremes,  'function XT_GetTPAExtremes(const TPA:TPointArray): TPointArray;');
+  AddCommand(@GetTPABBox,      'function XT_GetTPABBox(TPA:TPointArray): TPointArray;');
+  AddCommand(@GetTPABBox,      'function XT_GetTPABoundingBox(TPA:TPointArray): TPointArray;'); //Alias ^
   AddCommand(@GetAdjacent,     'procedure XT_GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean);');
   AddCommand(@ReverseTPA,      'procedure XT_ReverseTPA(var TPA: TPointArray);');
   AddCommand(@MoveTPA,         'procedure XT_MoveTPA(var TPA: TPointArray; SX,SY:Integer);');
@@ -197,7 +199,7 @@ begin
   case x of
     0:begin
         sType := 'TAlignMethod';
-        sTypeDef := '(Extremes, Convex);';
+        sTypeDef := '(AM_Extremes, AM_Convex, AM_BBox);';
       end;
   else
     x := -1;

@@ -19,7 +19,7 @@ function GetTPABounds(const TPA: TPointArray): TBox;
 function GetTPAMean(const TPA: TPointArray): TPoint;
 function GetTPAMiddle(const TPA: TPointArray): TPoint;
 function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
-function GetTPABBox(TPA:TPointArray): TPointArray; StdCall;
+function GetTPABBox(const TPA:TPointArray): TPointArray; StdCall;
 procedure GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean); Inline; StdCall;
 procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPoint); Inline;
 procedure ReverseTPA(var TPA: TPointArray); StdCall;
@@ -29,7 +29,7 @@ procedure LongestPolyVector(const Poly:TPointArray; var A,B:TPoint); StdCall;
 function InvertTPA(const TPA:TPointArray): TPointArray; StdCall;
 function RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray; StdCall;
 function TPAPartition(const TPA:TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray; StdCall;
-function AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
+function AlignTPA(const TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
 function CleanSortTPA(const TPA: TPointArray): TPointArray; StdCall;
 function UniteTPA(const TPA1, TPA2: TPointArray; RemoveDupes:Boolean): TPointArray; StdCall;
 procedure TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint); Inline; StdCall;
@@ -250,7 +250,7 @@ end;
 {*
  Returns the minimum bounding rectangle around the given TPA.
 *}
-function GetTPABBox(TPA:TPointArray): TPointArray; StdCall;
+function GetTPABBox(const TPA:TPointArray): TPointArray; StdCall;
 var
   L,i,j,v,c,edge_x,edge_y,w,h:Integer; 
   halfpi,X,Y,cosA,cosAP,CosAM: Extended;
@@ -552,7 +552,7 @@ end;
 {*
  This function should align the TPA by the longest side to the X-Axis.
 *}
-function AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
+function AlignTPA(const TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
 var 
   Shape:TPointArray;
   A,B:TPoint;

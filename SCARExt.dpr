@@ -100,8 +100,8 @@ begin
   AddCommand(@TPASeparateAxis, 'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
   AddCommand(@GetTPAExtremes,  'function XT_GetTPAExtremes(const TPA:TPointArray): TPointArray;');
-  AddCommand(@GetTPABBox,      'function XT_GetTPABBox(TPA:TPointArray): TPointArray;');
-  AddCommand(@GetTPABBox,      'function XT_GetTPABoundingBox(TPA:TPointArray): TPointArray;'); //Alias ^
+  AddCommand(@GetTPABBox,      'function XT_GetTPABBox(const TPA:TPointArray): TPointArray;');
+  AddCommand(@GetTPABBox,      'function XT_GetTPABoundingBox(const TPA:TPointArray): TPointArray;'); //Alias ^
   AddCommand(@GetAdjacent,     'procedure XT_GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean);');
   AddCommand(@ReverseTPA,      'procedure XT_ReverseTPA(var TPA: TPointArray);');
   AddCommand(@MoveTPA,         'procedure XT_MoveTPA(var TPA: TPointArray; SX,SY:Integer);');
@@ -110,7 +110,7 @@ begin
   AddCommand(@InvertTPA,       'function XT_InvertTPA(const TPA:TPointArray): TPointArray;');
   AddCommand(@RotateTPAEx,     'function XT_RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray;');
   AddCommand(@TPAPartition,    'function XT_TPAPartition(const TPA:TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray;');
-  AddCommand(@AlignTPA,        'function XT_AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray;');
+  AddCommand(@AlignTPA,        'function XT_AlignTPA(const TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray;');
   AddCommand(@CleanSortTPA,    'function XT_CleanSortTPA(const TPA: TPointArray): TPointArray;');
   AddCommand(@UniteTPA,        'function XT_UniteTPA(const TPA1, TPA2: TPointArray; RemoveDupes:Boolean): TPointArray;');
   AddCommand(@TPALine,         'procedure XT_TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint);');

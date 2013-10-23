@@ -1,4 +1,4 @@
-Unit XT.ContrastEdges;
+Unit XT_ContrastEdges;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,7 +6,7 @@ Unit XT.ContrastEdges;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 function ContrastEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall;  
 function ContrastEdgesGray(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall; 

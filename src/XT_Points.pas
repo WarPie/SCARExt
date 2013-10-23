@@ -1,4 +1,4 @@
-Unit XT.Points;
+Unit XT_Points;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -7,7 +7,7 @@ Unit XT.Points;
 interface
 
 uses
-  XT.Types, XT.Math, System.Math, System.SysUtils;
+  XT_Types, XT_Math, Math, SysUtils;
   
 function SamePoints(P1, P2:TPoint):Boolean; Inline;
 function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
@@ -17,15 +17,19 @@ procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
 function GetTPAMax(const TPA: TPointArray): TPoint;
 function GetTPAMiddle(const TPA: TPointArray): TPoint;
 function GetTPABounds(const TPA: TPointArray): TBox;
+function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
 procedure GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean); Inline; StdCall;
 procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPoint); Inline;
-procedure ReverseTPA(var TPA: TPointArray); StdCall; //Untested.
+procedure ReverseTPA(var TPA: TPointArray); StdCall;
 procedure MoveTPA(var TPA: TPointArray; SX,SY:Integer); StdCall;
+procedure TPARemoveDupes(var TPA: TPointArray); StdCall;
+procedure LongestPolyVector(const Poly:TPointArray; var A,B:TPoint); StdCall;
 function InvertTPA(const TPA:TPointArray): TPointArray; StdCall;
+function RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray; StdCall;
 function TPAPartition(const TPA:TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray; StdCall;
+function AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
 function CleanSortTPA(const TPA: TPointArray): TPointArray; StdCall;
 function UniteTPA(const TPA1, TPA2: TPointArray; RemoveDupes:Boolean): TPointArray; StdCall;
-procedure TPARemoveDupes(var TPA: TPointArray); //Inline; StdCall;
 procedure TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint); Inline; StdCall;
 function ConnectTPA(const TPA:TPointArray): TPointArray; Inline; StdCall;
 function ConnectTPAEx(TPA:TPointArray; Tension:Extended): TPointArray; Inline; StdCall;
@@ -50,7 +54,7 @@ function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; Std
 implementation
 
 uses 
-  XT.CSpline, XT.Collection;
+  XT_CSpline, XT_Collection;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -150,24 +154,6 @@ end;
 
 
 {*
- Middle defined by SumTPA divided by Length. 
- @note: SumTPA is in Math.pas
-*}
-function GetTPAMiddle(const TPA: TPointArray): TPoint;
-var
-  l: Integer;
-begin
-  l := Length(TPA);
-  if (l > 0) then
-  begin
-    Result := SumTPA(TPA);
-    Result := Point((Result.X div l), (Result.Y div l));
-  end else
-    Result := Point(0, 0);
-end;
-
-
-{*
  Return the largest and the smallest numbers for x, and y-axis in TPA.
 *}
 function GetTPABounds(const TPA: TPointArray): TBox;
@@ -192,6 +178,70 @@ begin;
     else if TPA[i].y < Result.y1 then
       Result.y1 := TPA[i].y;
   end;
+end;
+
+
+{*
+ Returns the most outer points in the TPA, requres a tpa of atleast 4 points.
+ Similar to GetTPABounds, except it returns the points.
+*}
+function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall;
+var
+  I,L : Integer;
+begin
+  L := High(TPA);
+  if (l < 3) then Exit; 
+  SetLength(Result, 4);
+  Result[0] := TPA[0];
+  Result[1] := TPA[0];
+  Result[2] := TPA[0];
+  Result[3] := TPA[0];
+  for I:= 1 to L do
+  begin
+    if TPA[i].x > Result[0].x then
+      Result[0] := TPA[i] 
+    else if TPA[i].x < Result[2].x then
+      Result[2] := TPA[i]; 
+    if TPA[i].y > Result[1].y then
+      Result[1] := TPA[i]
+    else if TPA[i].y < Result[3].y then
+      Result[3] := TPA[i]; 
+  end;
+end;
+
+{*
+ Mean as in defined by SumTPA divided by Length.
+*}
+function GetTPAMean(const TPA: TPointArray): TPoint;
+var
+  l: Integer;
+begin
+  l := Length(TPA);
+  if (l > 0) then
+  begin
+    Result := SumTPA(TPA);
+    Result := Point((Result.X div l), (Result.Y div l));
+  end else
+    Result := Point(0, 0);
+end;
+
+
+{*
+ Middle as in defined by the center of the shape's outer bounds.
+*}
+function GetTPAMiddle(const TPA: TPointArray): TPoint;
+var
+  l: Integer;
+  B : Tbox;
+begin
+  l := Length(TPA);
+  if (l > 0) then
+  begin
+    B := GetTPABounds(TPA);
+    Result.X := B.X1 + ((B.X2 - B.X1) div 2);
+    Result.Y := B.Y1 + ((B.Y2 - B.Y1) div 2);
+  end else
+    Result := Point(0, 0);
 end;
 
 
@@ -270,6 +320,59 @@ end;
 
 
 {*
+ Removing all duplicates in the TPA.
+*}
+procedure TPARemoveDupes(var TPA: TPointArray); StdCall;
+var
+  i, j, H: Integer;
+  Matrix: T2DBoolArray;
+  b: TBox;
+begin;
+  H := High(TPA);
+  if (H <= 0) then Exit;
+  b := GetTPABounds(TPA);
+  Matrix := BoolMatrixNil((b.X2 - b.X1) + 1, (b.Y2 - b.Y1) + 1);
+  j := 0;
+  for i:=0 to H do
+    if Matrix[(TPA[i].Y - b.Y1)][(TPA[i].X - b.X1)] <> True then
+    begin
+      Matrix[(TPA[i].Y - b.Y1)][(TPA[i].X - b.X1)] := True;
+      TPA[j] := TPA[i];
+      Inc(j);
+    end;
+  SetLength(TPA, j);
+  SetLength(Matrix, 0);
+end;
+
+
+{*
+ Given a Polygon defined by atleast two points, this function will find the longest side.
+*}
+procedure LongestPolyVector(const Poly:TPointArray; var A,B:TPoint); StdCall;
+var
+  I,j,L: Integer;
+  Dist,tmp: Single;
+begin
+  L := Length(Poly);
+  if (l <= 2) then Exit;
+  A := Poly[0];
+  B := Poly[1];
+  Dist := Sqr(A.x - B.x) + Sqr(A.y - B.y);
+  for I:= 0 to (L-1) do
+  begin    
+    j := (i+1) mod L;
+    tmp := Sqr(Poly[j].x - Poly[i].x) + Sqr(Poly[j].y - Poly[i].y);
+    if Tmp > Dist then
+    begin
+      A := Poly[i];
+      B := Poly[j];
+      Dist := tmp;
+    end;
+  end;
+end;
+
+
+{*
  Returns the points not in the TPA within the bounds of the TPA.
 *}
 function InvertTPA(const TPA:TPointArray): TPointArray; StdCall;
@@ -302,6 +405,38 @@ end;
 
 
 {*
+ Unlike RotateTPA found in SCAR-Divi this function tries to keep the TPA filled even after rotation.
+ The function is simply adding the surrounding pixels for each point to the result.
+ then it will filter out duplicates. The result may then be 1px larger then original in each direction.
+ 
+ //Future: Should look in to rotating the TPA first, then filling all small holes. Will be faster.
+*}
+function RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray;StdCall;
+var
+   I, L,cx,cy,h: Integer;
+   CosA,SinA,x,y: extended;
+begin
+  L := High(TPA);
+  cx := Center.x;
+  cy := Center.y;
+  SetLength(Result, (L+1)*3);
+  CosA := Cos(Radians);
+  SinA := Sin(Radians);
+  H := 0;
+  for I := 0 to L do
+  begin
+    H := H+3;
+    X := (CosA * (TPA[i].x - cX)) - (SinA * (TPA[i].y - cY)) + cX;
+    Y := (SinA * (TPA[i].x - cX)) + (CosA * (TPA[i].y - cY)) + cY;
+    Result[h-3] := Point(Trunc(x), Trunc(y));
+    Result[h-2] := Point(Trunc(x)-1, Trunc(y));
+    Result[h-1] := Point(Round(x), Ceil(y)-1);
+  end;
+  TPARemoveDupes(Result);
+end;
+
+
+{*
  Partitions a TPA, by splitting it in to boxes of `BoxWidth` and `BoxHeight`
  The result is the ATPA containing all the area TPAs.
 *}
@@ -328,6 +463,28 @@ begin
     Result[ID][L] := TPA[i];
   end;
 end; 
+
+
+{*
+ This function should align the TPA by the longest side to the X-Axis.
+*}
+function AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray; StdCall;
+var 
+  Shape:TPointArray;
+  A,B:TPoint;
+begin
+  case Method of
+    Extremes:Shape := GetTPAExtremes(TPA);
+    Convex:  Shape := ConvexHull(TPA);
+  end;
+  LongestPolyVector(Shape, A,B);
+  Angle := ArcTan2(-(B.y-A.y),(B.x-A.x));
+  //if (Angle > 2.95) then Angle := (PI-Angle)
+  //else if (Angle < -2.95) then Angle := (Angle-PI);     //Remove if causes problems or confusion.
+  Result := RotateTPAEx(TPA, GetTPAMiddle(TPA), Angle);
+  SetLength(Shape, 0);
+  Angle := Modulo(Degrees(Angle), 360);  //Always in range of 0 and 359 dgr!
+end;
 
 
 {*
@@ -402,32 +559,6 @@ begin
   end;
   SetLength(Matrix, 0);
 end; 
-
-
-{*
- Removing all duplicates in the TPA.
-*}
-procedure TPARemoveDupes(var TPA: TPointArray); //Inline;
-var
-  i, j, H: Integer;
-  Matrix: T2DBoolArray;
-  b: TBox;
-begin;
-  H := High(TPA);
-  if (H <= 0) then Exit;
-  b := GetTPABounds(TPA);
-  Matrix := BoolMatrixNil((b.X2 - b.X1) + 1, (b.Y2 - b.Y1) + 1);
-  j := 0;
-  for i:=0 to H do
-    if Matrix[(TPA[i].Y - b.Y1)][(TPA[i].X - b.X1)] <> True then
-    begin
-      Matrix[(TPA[i].Y - b.Y1)][(TPA[i].X - b.X1)] := True;
-      TPA[j] := TPA[i];
-      Inc(j);
-    end;
-  SetLength(TPA, j);
-  SetLength(Matrix, 0);
-end;
 
 
 {*
@@ -991,10 +1122,9 @@ end;
 *}
 function ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray; StdCall;
 var
-  W,H,i,x,y,rw,rh,x1,y1,method:Integer;
+  W,H,i,x,y,rw,rh,x1,y1:Integer;
   R,qsize,fsize,Count,S,j,L:Integer;
   Area:TBox;
-  Draw:Boolean;
   Matrix,Table:T2DIntArray;
   queue, face:TPointArray;
   pt,adj:TPoint;

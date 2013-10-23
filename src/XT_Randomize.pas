@@ -1,4 +1,4 @@
-Unit XT.Randomize;
+Unit XT_Randomize;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,7 +6,7 @@ Unit XT.Randomize;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
   
 function RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray; StdCall;  
 function RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray; StdCall;

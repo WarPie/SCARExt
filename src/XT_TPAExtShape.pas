@@ -1,4 +1,4 @@
-Unit XT.TPAExtShape;
+Unit XT_TPAExtShape;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,7 +6,7 @@ Unit XT.TPAExtShape;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  System.Types, XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
   
 function __SplitBoxesGetBounds(const TPA:TPointArray; BoxRad:Extended): TPointArray;
@@ -16,7 +16,7 @@ function TPAExtractShape(const PTS:TPointArray; Distance, EstimateRad:Integer): 
 implementation
 
 uses 
-  XT.Points, XT.Collection;
+  XT_Points, XT_Collection;
   
 {*
  Used to create an estimate of points which we will draw lines trough.

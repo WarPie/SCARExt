@@ -1,4 +1,4 @@
-Unit XT.Numeric;
+Unit XT_Numeric;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,14 +6,14 @@ Unit XT.Numeric;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 function SumTIA(const Arr: TIntArray): Integer; Inline;
 function SumTEA(const Arr: TExtArray): Extended; Inline;
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
 procedure TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
-function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; Stdcall;
+function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 
 
 //--------------------------------------------------
@@ -96,7 +96,7 @@ end;
 {*
   ...
 *}
-function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; Stdcall;
+function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 var x,y,i:Integer;
 begin
   SetLength(Result, Height,Width);

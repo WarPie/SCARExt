@@ -1,7 +1,7 @@
 {$L SCARExt.dll}
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
 || What is this: In short I would define SCAREXT as a grabage collection.
-|| At it current state, it's just a big pile of mess =)
+|| Alpha v0.1
 || - SLACKY
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 {$I Plotter.scar}
@@ -93,7 +93,7 @@ end;
 
 
 {*
- ....
+ .... Will probably be removed..
 *}
 function XT_BMPFindEdges(BMP:TSCARBitmap; MinDiff:Integer; GrayScale:Boolean): TPointArray;
 var 
@@ -108,38 +108,3 @@ begin
   end;
   SetLength(Img, 0);
 end;
-
-
-{*
- ....
-*}
-procedure XT_BMPContrastFilter(var BMP:TSCARBitmap; MinDiff:Integer; Split:Integer);
-var 
-  TPA,TMP: TPointArray; 
-  Cluster: T2DPointArray;
-  Img: T2DIntArray;
-  i: Integer;
-begin
-  Img := XT_Bmp2Array(BMP, False); 
-
-  Cluster := XT_ClusterTPA(XT_ContrastEdges(Img, MinDiff), Split, True);
-  
-  SetLength(TPA, 0); 
-  for i:=0 to High(Cluster) do
-  begin   
-    SetLength(TMP, 0);
-    TMP := XT_TPAExtractShape(Cluster[i], Split*2, 1);
-    if Length(TMP) > 0 then
-    begin
-      TMP := XT_FloodFillPolygon(TMP, True);
-      TPA := XT_UniteTPA(TPA, TMP, False);
-    end;
-  end;
-  BMP.SetPixels(XT_InvertTPA(TPA), 0);
-  
-  SetLength(Img, 0); 
-  SetLength(TPA, 0);
-  SetLength(TMP, 0);
-  SetLength(Cluster, 0);  
-end;
-

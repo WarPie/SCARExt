@@ -1,4 +1,4 @@
-Unit XT.Collection;
+Unit XT_Collection;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -7,7 +7,7 @@ Unit XT.Collection;
 
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 
 function IntMatrix(W,H,Init:Integer): T2DIntArray; StdCall;
@@ -31,7 +31,7 @@ procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inli
 implementation
 
 uses 
-  XT.Points;
+  XT_Points;
 
 
 {*

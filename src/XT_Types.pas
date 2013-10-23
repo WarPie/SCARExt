@@ -1,4 +1,4 @@
-unit XT.Types;
+unit XT_Types;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code, 
@@ -8,14 +8,14 @@ unit XT.Types;
 interface
 
 uses
-  System.Types, System.SysUtils;
+  SysUtils;
 
 type
   TPoint = Packed record X,Y: LongInt; end;
   TPointArray = array of TPoint;
   T2DPointArray = array of TPointArray;
   T3DPointArray = array of T2DPointArray;
-  
+
   TFPoint = Packed record X,Y:Extended; end;
   TFPointArray = Array of TFPoint;
   
@@ -35,7 +35,7 @@ type
   T2DExtArray = array of TExtArray;
   T3DExtArray = array of T2DExtArray;
   
-  (* Not SCAR compatible - Don't export*)
+  (* TBox is not SCAR compatible - Don't export functions that returns this *)
   TBox = Packed record
     X1: LongInt;
     Y1: LongInt;
@@ -43,6 +43,9 @@ type
     Y2: LongInt;
   end;
   TBoxArray = Array of TBox;
+
+  //
+  TAlignMethod = (Extremes, Convex);
 
 
 function Box(const x1,y1,x2,y2:Integer): TBox; Inline;
@@ -55,8 +58,6 @@ function TPAToTFPA(TPA:TPointArray): TFPointArray;
 //-----------------------------------------------------------------------
 implementation
 
-uses
-  System.Math;
 
 function Box(const X1,Y1,X2,Y2:Integer): TBox; Inline;
 begin

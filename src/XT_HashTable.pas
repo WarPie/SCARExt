@@ -1,4 +1,4 @@
-Unit XT.HashTable;
+Unit XT_HashTable;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -8,7 +8,7 @@ Unit XT.HashTable;
 interface
 
 uses
-  Classes, SysUtils, Windows;
+  Classes, SysUtils;
 
 type
   ColorLAB = Record
@@ -43,7 +43,7 @@ type
 implementation
 
 uses 
-  Math, XT.Math;
+  XT_Math;
 
 constructor ColorDict.Create(Size:Integer);
 begin

@@ -1,4 +1,4 @@
-Unit XT.DensityMap;
+Unit XT_DensityMap;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,7 +6,7 @@ Unit XT.DensityMap;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 
 procedure __AreaSum(Matrix:T2DExtArray; W, H, Radius:Integer); Inline;
@@ -20,7 +20,7 @@ procedure TPADensitySort(var Arr: TPointArray; Radius, Passes:Integer); StdCall;
 implementation
 
 uses
-  XT.Points;
+  XT_Points;
 
 
 procedure __AreaSum(Matrix:T2DExtArray; W, H, Radius:Integer); Inline;

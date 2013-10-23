@@ -276,7 +276,7 @@ end;
   >> Width, Height = The maximum numbers (X, and Y-axis).
   >> FontSize.. The size of the numbers, 8-10 should be good.
 *}
-function TPlotCreate(Width,Height: Integer; FontSize: Integer): TPlot;
+function TPlotCreate(LowX,LowY, HighX,HighY: Integer; FontSize: Integer): TPlot;
 var 
   chars:String;
   TMP: T2DPointArray;
@@ -286,15 +286,15 @@ begin
   TPlotFont := LoadCharsFromFont2('Times', TPlotFontSize, False, False, False, False); //Don't change.
   Result.W := 510;
   Result.H := 290;
-  Result.XPad := Max(30, TPlotFontSize * (Length(IntToStr(Width))));
+  Result.XPad := Max(30, TPlotFontSize * (Length(IntToStr(HighX - LowX))));
   Result.YPad := Max(35, TPlotFontSize*2);
   //Result.YPad := 30;  
-  Result.PW := Width;
-  Result.PH := Height;
-  Result.XMax := Width;
-  Result.YMax := Height;
-  Result.XMin := 0;
-  Result.YMin := 0;
+  Result.PW := HighX - LowX;
+  Result.PH := HighY - LowY;
+  Result.XMax := HighX;
+  Result.YMax := HighY;
+  Result.XMin := LowX;
+  Result.YMin := LowY;
   Result.BMP := TSCARBitmap.Create('');
   Result.BMP.SetSize(Result.W+(Result.XPad*2), Result.H+(Result.YPad*2));
   
@@ -400,13 +400,9 @@ end;
 *}
 procedure TPlotSetSize(var Plot: TPlot; W,H:Integer);
 begin
-  Plot.W := W;
-  Plot.H := H;
-  Plot.XMax := W;
-  Plot.YMax := H; 
-  Plot.XMin := 0;
-  Plot.YMin := 0;
-  Plot.BMP.SetSize(W+(Plot.XPad*2), H+(Plot.YPad*2));
+  Plot.W := Max(50,W);
+  Plot.H := Max(50,H);
+  Plot.BMP.SetSize(Plot.W+(Plot.XPad*2), Plot.H+(Plot.YPad*2));
 end;
 
 

@@ -1,4 +1,4 @@
-Unit XT.Math;
+Unit XT_Math;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -7,12 +7,12 @@ Unit XT.Math;
 interface
 
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
   
   
 function Radians(Dgrs: Extended): Extended; Inline;
 function Degrees(Rads: Extended): Extended; Inline;
-function Modulo(X,Y:Extended): Extended; Inline; Stdcall;
+function Modulo(X,Y:Extended): Extended; Inline; StdCall;
 function DistManhattan(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistEuclidean(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistChebyshev(const pt1,pt2: TPoint): Extended; Inline; StdCall;
@@ -44,7 +44,7 @@ begin Result := Rads * (180/Pi); end;
 {*
  "Real" modulus function as seen in: WolframAlpha, MatLab and Python, and many more modern programming languages.
 *}
-function Modulo(X,Y:Extended): Extended; Inline; Stdcall;
+function Modulo(X,Y:Extended): Extended; Inline; StdCall;
 var d: Single;
 begin
   d := X / Y;

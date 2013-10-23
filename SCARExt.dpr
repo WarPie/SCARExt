@@ -12,19 +12,19 @@ uses
   Windows,
   Math,
 
-  XT.Types in 'src\XT.Types.pas',
-  XT.HashTable in 'src\XT.HashTable.pas',
-  XT.ColorMath in 'src\XT.ColorMath.pas',
-  XT.Math in 'src\XT.Math.pas',
-  XT.Collection in 'src\XT.Collection.pas',
-  XT.Numeric in 'src\XT.Numeric.pas',
-  XT.Randomize in 'src\XT.Randomize.pas',
-  XT.Points in 'src\XT.Points.pas',
-  XT.Finder in 'src\XT.Finder.pas',
-  XT.CSpline in 'src\XT.CSpline.pas',
-  XT.DensityMap in 'src\XT.DensityMap.pas',
-  XT.ContrastEdges in 'src\XT.ContrastEdges.pas',
-  XT.TPAExtShape in 'src\XT.TPAExtShape.pas';
+  XT_Types,
+  XT_HashTable,
+  XT_ColorMath,
+  XT_Math,
+  XT_Collection,
+  XT_Numeric,
+  XT_Randomize,
+  XT_Points,
+  XT_Finder,
+  XT_CSpline,
+  XT_DensityMap,
+  XT_ContrastEdges,
+  XT_TPAExtShape;
 
   
 type
@@ -96,32 +96,36 @@ begin
   
   
   //** Points.pas **//
-  AddCommand(@ClusterTPAEx,    'function XT_ClusterTPAEx(const TPA: TPointArray; Distx,Disty:Integer; EightWay:Boolean): T2DPointArray;');
-  AddCommand(@ClusterTPA,      'function XT_ClusterTPA(const TPA: TPointArray; Distance:Integer; EightWay:Boolean): T2DPointArray;');
-  AddCommand(@MoveTPA,         'procedure XT_MoveTPA(var TPA: TPointArray; SX,SY:Integer);');
-  AddCommand(@SumTPA,          'function XT_SumTPA(const Arr: TPointArray): TPoint;');
-  AddCommand(@ReverseTPA,      'procedure XT_ReverseTPA(var TPA: TPointArray);');
-  AddCommand(@UniteTPA,        'function XT_UniteTPA(const TPA1, TPA2: TPointArray; RemoveDupes:Boolean): TPointArray;');
-  AddCommand(@InvertTPA,       'function XT_InvertTPA(const TPA:TPointArray): TPointArray;');
-  AddCommand(@GetAdjacent,     'procedure XT_GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:boolean);');
-  AddCommand(@TPALine,         'procedure XT_TPALine(var TPA:TPointArray; P1, P2: TPoint);');
-  AddCommand(@ConnectTPA,      'function XT_ConnectTPA(const TPA:TPointArray): TPointArray;');
-  AddCommand(@ConnectTPAEx,    'function XT_ConnectTPAEx(TPA:TPointArray; Tension:Extended): TPointArray;');
-  AddCommand(@TPALine,         'procedure XT_TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint)');
-  AddCommand(@TPACircle,       'procedure XT_TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer);');
-  AddCommand(@TPAEllipse,      'procedure XT_TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer);');
-  AddCommand(@TPASimplePoly,   'procedure XT_TPASimplePoly(var TPA:TPointArray; const Center: TPoint; Sides:Integer; const Dir:TPoint);');
-  AddCommand(@XagonPoints,     'function XT_XagonPoints(const Center:TPoint; Sides:Integer; const Dir:TPoint): TPointArray;');
-  AddCommand(@ConvexHull,      'function XT_ConvexHull(const TPA:TPointArray): TPointArray;');
-  AddCommand(@CleanSortTPA,    'function XT_CleanSortTPA(const TPA: TPointArray): TPointArray;');
-  AddCommand(@TPAOutline,      'function XT_TPAOutline(const TPA:TPointArray): TPointArray;');
-  AddCommand(@TPABorder,       'function XT_TPABorder(const TPA:TPointArray): TPointArray;');
-  AddCommand(@TPAPartition,    'function XT_TPAPartition(const TPA:TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray;');
-  AddCommand(@FloodFillTPA,    'function XT_FloodFillTPA(const TPA:TPointArray; const Start:TPoint; EightWay:Boolean): TPointArray;');
-  AddCommand(@FloodFillTPAEx,  'function XT_FloodFillTPAEx(const TPA:TPointArray; const Start:TPoint; EightWay, KeepEdges:Boolean): TPointArray;');
-  AddCommand(@FloodFillPolygon,'function XT_FloodFillPolygon(const Poly:TPointArray; EightWay:Boolean): TPointArray;');
+  AddCommand(@SumTPA,          'function XT_SumTPA(Arr: TPointArray): TPoint;');
   AddCommand(@TPASeparateAxis, 'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
+  AddCommand(@GetTPAExtremes,  'function XT_GetTPAExtremes(const TPA:TPointArray): TPointArray;');
+  AddCommand(@GetAdjacent,     'procedure XT_GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean);');
+  AddCommand(@ReverseTPA,      'procedure XT_ReverseTPA(var TPA: TPointArray);');
+  AddCommand(@MoveTPA,         'procedure XT_MoveTPA(var TPA: TPointArray; SX,SY:Integer);');
+  AddCommand(@TPARemoveDupes,  'procedure XT_TPARemoveDupes(var TPA: TPointArray);');
+  AddCommand(@LongestPolyVector, 'procedure XT_LongestPolyVector(const Poly:TPointArray; var A,B:TPoint);');
+  AddCommand(@InvertTPA,       'function XT_InvertTPA(const TPA:TPointArray): TPointArray;');
+  AddCommand(@RotateTPAEx,     'function XT_RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray;');
+  AddCommand(@TPAPartition,    'function XT_TPAPartition(const TPA:TPointArray; BoxWidth, BoxHeight:Integer): T2DPointArray;');
+  AddCommand(@AlignTPA,        'function XT_AlignTPA(TPA:TPointArray; Method: TAlignMethod; var Angle:Extended): TPointArray;');
+  AddCommand(@CleanSortTPA,    'function XT_CleanSortTPA(const TPA: TPointArray): TPointArray;');
+  AddCommand(@UniteTPA,        'function XT_UniteTPA(const TPA1, TPA2: TPointArray; RemoveDupes:Boolean): TPointArray;');
+  AddCommand(@TPALine,         'procedure XT_TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint);');
+  AddCommand(@ConnectTPA,      'function XT_ConnectTPA(const TPA:TPointArray): TPointArray;');
+  AddCommand(@ConnectTPAEx,    'function XT_ConnectTPAEx(TPA:TPointArray; Tension:Extended): TPointArray;');
+  AddCommand(@XagonPoints,     'function XT_XagonPoints(const Center:TPoint; Sides:Integer; const Dir:TPoint): TPointArray;');
+  AddCommand(@TPAEllipse,      'procedure XT_TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer);');
+  AddCommand(@TPACircle,       'procedure XT_TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer);');
+  AddCommand(@TPASimplePoly,   'procedure XT_TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint);');
+  AddCommand(@ConvexHull,      'function XT_ConvexHull(const TPA:TPointArray): TPointArray;');
+  AddCommand(@FloodFillTPAEx,  'function XT_FloodFillTPAEx(const TPA:TPointArray; const Start:TPoint; EightWay, KeepEdges:Boolean): TPointArray;');
+  AddCommand(@FloodFillTPA,    'function XT_FloodFillTPA(const TPA:TPointArray; const Start:TPoint; EightWay:Boolean): TPointArray;');
+  AddCommand(@TPAOutline,      'function XT_TPAOutline(const TPA:TPointArray): TPointArray;');
+  AddCommand(@TPABorder,       'function XT_TPABorder(const TPA:TPointArray): TPointArray;');
+  AddCommand(@FloodFillPolygon,'function XT_FloodFillPolygon(const Poly:TPointArray; EightWay:Boolean): TPointArray;');
+  AddCommand(@ClusterTPAEx,    'function XT_ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray;');
+  AddCommand(@ClusterTPA,      'function XT_ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean): T2DPointArray;');
   AddCommand(@TPASkeleton,     'function XT_TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray;');
 
   //** CSpline.pas **//
@@ -163,14 +167,15 @@ begin
   CommandsLoaded := False;
 end;
 
-function GetFunctionCount(): Integer; stdcall;
+
+function GetFunctionCount: Integer; StdCall;
 begin
   if not commandsLoaded then
     SetupCommands;
   Result := Length(commands);
 end;
 
-function GetFunctionInfo(x: Integer; var ProcAddr: Pointer; var ProcDef: PAnsiChar): Integer; stdcall;
+function GetFunctionInfo(x: Integer; var ProcAddr: Pointer; var ProcDef: PAnsiChar): Integer; StdCall;
 begin
   if ((x > -1) and InRange(x, Low(commands), High(commands))) then
   begin
@@ -182,6 +187,26 @@ begin
   Exit(-1);
 end;
 
+function GetTypeCount: Integer; StdCall;
+begin
+  Result := 1;
+end;
+
+function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
+begin
+  case x of
+    0:begin
+        sType := 'TAlignMethod';
+        sTypeDef := '(Extremes, Convex);';
+      end;
+  else
+    x := -1;
+  end;
+  Result := x;
+end;
+
+exports GetTypeCount;
+exports GetTypeInfo;
 exports GetFunctionCount;
 exports GetFunctionInfo;
 

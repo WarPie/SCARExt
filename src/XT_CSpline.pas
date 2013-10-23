@@ -1,4 +1,4 @@
-Unit XT.CSpline;
+Unit XT_CSpline;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,7 +6,7 @@ Unit XT.CSpline;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 
 function __Tangent(const p0:TFPoint; const p1:TFPoint; T:Extended): TFPoint; Inline;
@@ -22,7 +22,7 @@ function CSpline(TPA:TPointArray; Tension:Extended; Connect:Boolean): TPointArra
 //--------------------------------------------------
 implementation
 uses
-  XT.Points;
+  XT_Points;
 
 
 function __Tangent(const p0:TFPoint; const p1:TFPoint; T:Extended): TFPoint; Inline;

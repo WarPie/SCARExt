@@ -1,4 +1,4 @@
-Unit XT.Finder;
+Unit XT_Finder;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
  > As soon as it's released publicly, I do no longer OWN the code,
@@ -6,23 +6,23 @@ Unit XT.Finder;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT.Types, System.Math, System.SysUtils;
+  XT_Types, Math, SysUtils;
 
 
 
-function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; Stdcall;
-function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; Stdcall;
+function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
+function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; StdCall;
 
 
 //--------------------------------------------------
 implementation
 
 uses
-  XT.HashTable, XT.ColorMath, XT.Numeric, XT.Math;
+  XT_HashTable, XT_ColorMath, XT_Math;
 
 
 // Find multiple matches of specified color.
-function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; Stdcall;
+function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
 var
   W,H,X,Y,S,step:Integer;
   L,C,HH, C1,H1, DeltaHue,FF,EE,DD:Single;
@@ -85,7 +85,7 @@ end;
 
 
 // Find multiple matches of specified color.
-function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; Stdcall;
+function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; StdCall;
 var
   W,H,X,Y,S,step:Integer;
   L,A,B,FF,EE,DD:Single;

@@ -7,7 +7,7 @@ Unit XT_Collection;
 
 interface
 uses
-  XT_Types, Math, SysUtils;
+  XT_Types, Math;
 
 
 function IntMatrix(W,H,Init:Integer): T2DIntArray; StdCall;
@@ -19,12 +19,11 @@ function BoolMatrix(W,H:Integer;Init:Boolean): T2DBoolArray; StdCall;
 function BoolMatrixNil(W,H:Integer): T2DBoolArray; StdCall;
 function TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
 function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
+//Other----------->
 procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
-procedure BlurImageArr(var ImgArr:T2DIntArray; Radius:Integer); StdCall;
 function NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 function ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
-
 
 
 //--------------------------------------------------
@@ -245,65 +244,6 @@ end;
 
 
 //---------------- OTHER -----------------
-{*
- Appends a blurfilter to the Matrix/Image array. Sadly i've made it so that it requres a litte much memory.. :E
- Could have used a Gaussian Blur.. But somehow I ended up with this.
-*}
-procedure BlurImageArr(var ImgArr:T2DIntArray; Radius:Integer); StdCall;
-var
-  table,xo: Array of T2DIntArray;
-  y0,x0,y1,x1,x,y,w,h: Integer;
-  r,g,b:Integer;
-  AT,BT,CT,DT:TIntArray;
-  LMax: Extended;
-begin
-  W := High(ImgArr[0]);
-  H := High(ImgArr);
-  SetLength(Table, H+2, W+2, 3);
-  SetLength(XO, H+2, W+2, 3);
-  for y:=0 to H do
-    for x:=0 to W do
-    begin
-      R := (ImgArr[y][x] and $FF);
-      G := ((ImgArr[y][x] shr 8) and $FF);
-      B := ((ImgArr[y][x] shr 16) and $FF);
-      Table[y+1][x+1][0] := (Table[y+1][x][0] + Table[y][x+1][0] - Table[y][x][0] + R);
-      Table[y+1][x+1][1] := (Table[y+1][x][1] + Table[y][x+1][1] - Table[y][x][1] + G);
-      Table[y+1][x+1][2] := (Table[y+1][x][2] + Table[y][x+1][2] - Table[y][x][2] + B);
-    end;
-
-  SetLength(AT, 3); SetLength(BT, 3);
-  SetLength(CT, 3); SetLength(DT, 3);
-  LMax := 0;
-  for y:=0 to H do
-  begin
-    y0 := Max(0, y - radius);
-    y1 := Min(h, y + radius + 1);
-    for x:=0 to W do
-    begin
-      x0 := Max(0, x - radius);
-      x1 := Min(W, x + radius + 1);
-      AT := Table[y0][x0];
-      BT := Table[y1][x1];
-      CT := Table[y1][x0];
-      DT := Table[y0][x1];
-      R := (AT[0] + BT[0] - CT[0] - DT[0]);
-      G := (AT[1] + BT[1] - CT[1] - DT[1]);
-      B := (AT[2] + BT[2] - CT[2] - DT[2]);
-      XO[y][x][0] := R; XO[y][x][1] := G; XO[y][x][2] := B;
-      R := Max(Max(R,G), B);
-      if LMax < R then LMax := R;
-    end;
-  end;
-  SetLength(Table, 0);
-
-  LMax := 255 / LMax;
-  for y:=0 to H do
-    for x:=0 to W do
-      ImgArr[y][x] := (Round(LMax*XO[y][x][0])) or (Round(LMax*XO[y][x][1]) ShL 8) or (Round(LMax*XO[y][x][2]) ShL 16);
-end; 
-
-
 function NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 var
   x,y,H,W: Integer;
@@ -385,4 +325,10 @@ begin
   end;
 end; 
 
+
 end.
+
+
+
+
+

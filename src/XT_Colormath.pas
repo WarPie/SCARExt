@@ -30,6 +30,11 @@ const
 
   
 function __ICbrt(x:Single): Single; Inline;
+procedure ColorToRGB(Color:Integer; var R,G,B:Byte); Inline;
+function RGBToColor(R,G,B:Byte): Integer; Inline;
+function RGBIntToColor(R,G,B:Integer): Integer; Inline;
+function ColorToGray(Color:Integer): Byte; Inline;
+function ColorToGrayL(Color:Integer): Byte; Inline;
 procedure ColorToLAB(color:Integer; var L,A,B:Single); Inline;
 procedure ColorToLCH(Color:Integer; var L,C,H:Single); Inline;
 
@@ -57,6 +62,36 @@ begin
   Result := x + ((Result - x)/2);
 end;
 
+procedure ColorToRGB(Color:Integer; var R,G,B:Byte); Inline;
+begin
+  R := (color and $FF);
+  G := ((color shr 8) and $FF);
+  B := ((color shr 16) and $FF);
+end;
+
+function RGBToColor(R,G,B:Byte): Integer; Inline;
+begin
+  Result := R or G shl 8 or B shl 16;
+end;
+
+function RGBIntToColor(R,G,B:Integer): Integer; Inline;
+begin
+  Result := R or G shl 8 or B shl 16;
+end;
+
+//Cheap average of R+G+B.
+function ColorToGray(Color:Integer): Byte; Inline;
+begin
+  Result := ((Color and $FF) + ((Color shr 8) and $FF) + ((Color shr 16) and $FF)) div 3;
+end;
+
+//Grayscale - Calculated similarly to how XYZ calculates it's `Y`
+function ColorToGrayL(Color:Integer): Byte; Inline;
+begin
+  Result := Trunc((0.2126 * (Color and $FF)) +
+                  (0.7152 * ((Color shr 8) and $FF)) +
+                  (0.0722 * ((Color shr 16) and $FF)));
+end;
 
 procedure ColorToLAB(color:Integer; var L,A,B:Single); Inline;
 var

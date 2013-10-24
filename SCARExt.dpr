@@ -18,6 +18,7 @@ uses
   XT_Math,
   XT_Collection,
   XT_Numeric,
+  XT_Imaging,
   XT_Randomize,
   XT_Points,
   XT_Finder,
@@ -83,11 +84,6 @@ begin
   AddCommand(@FindColorTolExLCH, 'function XTCore_FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   AddCommand(@FindColorTolExLAB, 'function XTCore_FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
 
-
-  //** ContrastEdges.pas **//
-  AddCommand(@ContrastEdges,     'function XT_ContrastEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
-  AddCommand(@ContrastEdgesGray, 'function XT_ContrastEdgesGray(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
-  
   
   //** DensityMap.pas **//
   AddCommand(@DensityMap,       'function XT_DensityMap(const TPA:TPointArray; Radius, Passes:Integer): T2DExtArray;');
@@ -150,10 +146,17 @@ begin
   AddCommand(@TPAToBoolMatrix,    'function XT_TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray;');
   AddCommand(@TPAToBoolMatrixNil, 'function XT_TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DIntArray;');
 
-  AddCommand(@BlurImageArr,   'procedure XT_BlurImageArr(var ImgArr:T2DIntArray; Radius:Integer);');
   AddCommand(@NormalizeATIA,  'function XT_NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
   AddCommand(@ATIAGetIndices, 'function XT_ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
   
+  
+  //** CSpline.pas **//
+  AddCommand(@ImBlur,      'procedure XT_ImBlur(var ImgArr:T2DIntArray; Radius:Integer);');
+  AddCommand(@ImThreshold, 'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray;');
+  AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray;');
+  AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray;');
+  AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
+
   
   //** Randomize.pas **//
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
@@ -191,7 +194,7 @@ end;
 
 function GetTypeCount: Integer; StdCall;
 begin
-  Result := 1;
+  Result := 2;
 end;
 
 function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
@@ -200,6 +203,10 @@ begin
     0:begin
         sType := 'TAlignMethod';
         sTypeDef := '(AM_Extremes, AM_Convex, AM_BBox);';
+      end;
+    1:begin
+        sType := 'TThreshMethod';
+        sTypeDef := '(TM_Mean, TM_MinMax);';
       end;
   else
     x := -1;

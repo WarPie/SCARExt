@@ -1,8 +1,8 @@
 Unit XT_ColorMath;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
- CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
- > As soon as it's released publicly, I do no longer OWN the code,
- > I however own my copy of it. I can only ask you to keep my credits.
+ Copyright (c) 2013, Jarl K. <Slacky> Holta || http://github.com/WarPie
+ All rights reserved.
+ For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses

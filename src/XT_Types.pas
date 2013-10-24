@@ -1,8 +1,8 @@
 unit XT_Types;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
- CopyLeft Jarl "SLACKY" Holta - Released under Lazy-lisence which states:
- > As soon as it's released publicly, I do no longer OWN the code, 
- > I however only own my personal copy of it.
+ Copyright (c) 2013, Jarl K. <Slacky> Holta || http://github.com/WarPie
+ All rights reserved.
+ For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 
 interface

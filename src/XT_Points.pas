@@ -185,7 +185,7 @@ end;
 
 {*
  Returns the most outer points in the TPA, requres a tpa of atleast 4 points.
- Similar to GetTPABounds, except it returns the points.
+ Similar to GetTPABounds, except it returns the actuall points.
 *}
 function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall;
 var
@@ -210,6 +210,7 @@ begin
       Result[3] := TPA[i]; 
   end;
 end;
+
 
 {*
  Mean as in defined by SumTPA divided by Length.
@@ -240,8 +241,8 @@ begin
   if (l > 0) then
   begin
     B := GetTPABounds(TPA);
-    Result.X := B.X1 + ((B.X2 - B.X1) div 2);
-    Result.Y := B.Y1 + ((B.Y2 - B.Y1) div 2);
+    Result.X := (B.X2 + B.X1) div 2;
+    Result.Y := (B.Y2 + B.Y1) div 2;
   end else
     Result := Point(0, 0);
 end;

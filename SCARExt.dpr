@@ -14,6 +14,7 @@ uses
 
   XT_Types,
   XT_Standard,
+  XT_Sorting,
   XT_Math,
   XT_Collection,
   XT_ColorMath,
@@ -79,8 +80,14 @@ begin
   AddCommand(@SumTEA,    'function XT_SumTEA(const Arr: TExtArray): Extended;');
   AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
   AddCommand(@TIAToATIA, 'function XTCore_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
-  
-  
+
+  //** Sorting.pas **//
+  AddCommand(@SortTIA, 'procedure XT_SortTIA(var Arr: TIntArray);');
+  AddCommand(@SortTEA, 'procedure XT_SortTEA(var Arr: TExtArray);');
+  AddCommand(@SortTPA, 'procedure XT_SortTPA(var Arr: TPointArray);');
+  AddCommand(@SortTPAByRow,    'procedure XT_SortTPAByRow(var Arr: TPointArray);');
+  AddCommand(@SortTPAByColumn, 'procedure XT_SortTPAByColumn(var Arr: TPointArray);');
+
   //** Finder.pas **//
   AddCommand(@FindColorTolExLCH, 'function XTCore_FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   AddCommand(@FindColorTolExLAB, 'function XTCore_FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');

@@ -21,16 +21,6 @@ implementation
 uses
   XT_Collection, XT_Points, XT_ColorMath;
 
-{*
- Function should populate a (1x1, 3x3, 5x5, 7x7...) matrix with circular weight corresponding to indice.
- Will be used in functions that does a convolution-process.
- Note that the sum of all elements of this matrix is 1.0.
-*}
-procedure __CovolveFilter(var Filter:T2DExtArray; BoxSize:Integer); Inline;
-begin
-  //TBA...
-end;
-
 
 {*
  Returns a blurred version of the Matrix/ImgArray.
@@ -40,15 +30,15 @@ function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 var
   W,H,x,y,mid,fx,fy,size:Integer;
   R,G,B,color,lx,ly,hx,hy:Integer;
-  Filter:TIntArray;
 begin
-  if Block mod 2 = 0 then Exit;
+  Size := (Block*Block);
+  if (Size<=1) or (Block mod 2 = 0) then Exit;
   W := High(ImgArr[0]);
   H := High(ImgArr);
   SetLength(Result, H+1,W+1);
-  SetLength(Filter, (Block*Block)+1);
   mid := Block div 2;
-  Size := (Block*Block);
+
+  
   for y:=0 to H do
   begin
     ly := Max(0,y-mid);
@@ -71,7 +61,6 @@ begin
                       ((B div size) shl 16);
     end;
   end;
-  SetLength(Filter, 0);
 end;
 
 
@@ -89,26 +78,27 @@ begin
     begin
       if not (Weight[TmpIdx] < Weight[TmpIdx - 1]) then
         Break;
-      SwapI(Arr[TmpIdx], Arr[TmpIdx - 1]);
-      SwapI(Weight[TmpIdx], Weight[TmpIdx - 1]);
+      ExchI(Arr[TmpIdx], Arr[TmpIdx - 1]);
+      ExchI(Weight[TmpIdx], Weight[TmpIdx - 1]);
     end;
 end;
 
 function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray; StdCall;
 var
-  W,H,j,x,y,low,fx,fy,mdl,size,color:Integer;
+  W,H,j,x,y,fx,fy,low,mid,size,color:Integer;
   lx,ly,hx,hy:Integer;
   Filter,Colors:TIntArray;
 begin
   Size := Block * Block;
-  if (Size<=1) or (Block mod 2 = 0) then Exit(ImgArr);
+  if (Size<=1) or (Block mod 2 = 0) then Exit;
   W := High(ImgArr[0]);
   H := High(ImgArr);
   SetLength(Result, H+1,W+1);
   SetLength(Filter, Size+1);
   SetLength(Colors, Size+1);
   low := Block div 2;
-  mdl := Size div 2;
+  mid := Size div 2;
+  
   for y:=0 to H do
   begin
     ly := Max(0,y-low);
@@ -127,7 +117,7 @@ begin
           Inc(j);
         end;
       __SortRGB(Colors, Filter);
-      Result[y][x] := Colors[mdl];
+      Result[y][x] := Colors[mid];
     end;
   end;
   SetLength(Colors, 0);
@@ -157,11 +147,14 @@ begin
   W := Length(ImgArr[0]);
   H := Length(ImgArr);
   SetLength(Result, H,W);
+  
   for i:=0 to (Threshold-1) do Tab[i] := Alpha;
   for i:=Threshold to 255 do Tab[i] := Beta;
-  Dec(W); Dec(H);
-  for x:=0 to W do
-    for y:=0 to H do
+  Dec(W); 
+  Dec(H);
+  
+  for y:=0 to H do
+    for x:=0 to W do
       Result[y][x] := Tab[ColorToGrayL(ImgArr[y][x])];
 end;
 
@@ -193,7 +186,7 @@ begin
   W := Length(ImgArr[0]);
   H := Length(ImgArr);
   SetLength(Result, H,W);
-  SetLength(Temp, H+2,W+2);
+  SetLength(Temp, H,W);
   Dec(W); Dec(H);
   
   //Finding the threshold - While at it convert image to grayscale.
@@ -208,7 +201,7 @@ begin
         for x:=0 to W do
         begin
           Color := ColorToGrayL(ImgArr[y][x]);
-          Temp[y+1][x+1] := Color;
+          Temp[y][x] := Color;
           Counter := Counter + Color;
         end;
         Threshold := Threshold + (Counter div W);
@@ -216,6 +209,7 @@ begin
       if (C < 0) then Threshold := (Threshold div H) - Abs(C)
       else Threshold := (Threshold div H) + C;
     end;
+    
     //Mean of Min and Max values
     TM_MinMax:
     begin
@@ -225,7 +219,7 @@ begin
         for x:=0 to W do
         begin
           Color := ColorToGrayL(ImgArr[y][x]);
-          Temp[y+1][x+1] := Color;
+          Temp[y][x] := Color;
           if Color < IMin then
             IMin := Color
           else if Color > IMax then
@@ -235,14 +229,13 @@ begin
       else Threshold := ((IMax+IMin) div 2) + C;
     end;
   end;
-  Threshold := Max(0, Min(Threshold, 255)); //In range 0..255.
   
+  Threshold := Max(0, Min(Threshold, 255)); //In range 0..255
   for i:=0 to (Threshold-1) do Tab[i] := Alpha;
   for i:=Threshold to 255 do Tab[i] := Beta;  
-  
-  for x:=1 to W do
-    for y:=1 to H do
-      Result[y-1][x-1] := Tab[Temp[y][x]];
+  for y:=0 to H do
+    for x:=0 to W do
+      Result[y][x] := Tab[Temp[y][x]];
   SetLength(Temp, 0);
 end;
 

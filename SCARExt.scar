@@ -90,21 +90,3 @@ begin
   XT_MoveTPA(TPA,XS,YS);
   
 end;
-
-
-{*
- .... Will probably be removed..
-*}
-function XT_BMPFindEdges(BMP:TSCARBitmap; MinDiff:Integer; GrayScale:Boolean): TPointArray;
-var 
-  Img:T2DIntArray;
-  W,H:Integer;
-begin
-  XT_ClientSize(W,H);
-  Img := XT_Bmp2Array(XT_ScreenAreaBMP(0,0,W,H), True);
-  case GrayScale of
-    True:  Result := XT_ContrastEdgesGray(Img, MinDiff);
-    False: Result := XT_ContrastEdges(Img, MinDiff);
-  end;
-  SetLength(Img, 0);
-end;

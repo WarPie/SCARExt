@@ -5,7 +5,7 @@ Small library extension for SCAR-Divi.. Contains some "usefull" functions.
 
 Precompiled version
 --------
-http://www.speedyshare.com/bQxWM/SCARExt.rar (Dated: 23.Oct.2013) 
+http://www.speedyshare.com/sNKXS/SCARExt.rar (Dated: 26.Oct.2013) 
 
 
 Installation 
@@ -17,6 +17,6 @@ Your folder for SCAR-Divi might not be the same as mine, just be sure to unzip i
 To use
 --------
 Simply add the folling line @ top of your script:
-{$I SCAREXT/SCARExt.scar}
+{$I SCARExt/SCARExt.scar}
 
 All exported functions begins with "XT_"... To find what is exported you simply write "XT_" and then press Ctrl+Space..

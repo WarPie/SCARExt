@@ -6,9 +6,10 @@ Unit XT_Imaging;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT_Types, Math;
+  XT_Types, XT_Standard, Math;
 
-procedure ImBlur(var ImgArr:T2DIntArray; Radius:Integer); StdCall;
+function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
+function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray; StdCall;
 function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray; StdCall;
 function ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray; StdCall;
@@ -28,65 +29,110 @@ uses
 procedure __CovolveFilter(var Filter:T2DExtArray; BoxSize:Integer); Inline;
 begin
   //TBA...
-end; 
-  
+end;
+
+
 {*
- Appends a blurfilter to the Matrix/Image array. Sadly i've made it so that it requres a litte much memory and is a lil slow.. :E
- Could have used a Gaussian Blur.. But somehow I ended up with this.
+ Returns a blurred version of the Matrix/ImgArray.
+ Block is the radius of the blur: 3,5,7,9...
 *}
-procedure ImBlur(var ImgArr:T2DIntArray; Radius:Integer); StdCall;
+function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 var
-  table,xo: Array of T2DIntArray;
-  y0,x0,y1,x1,x,y,w,h: Integer;
-  r,g,b:Integer;
-  AT,BT,CT,DT:TIntArray;
-  LMax: Extended;
+  W,H,x,y,mid,fx,fy,size:Integer;
+  R,G,B,color,lx,ly,hx,hy:Integer;
+  Filter:TIntArray;
 begin
+  if Block mod 2 = 0 then Exit;
   W := High(ImgArr[0]);
   H := High(ImgArr);
-  SetLength(Table, H+2, W+2, 3);
-  SetLength(XO, H+2, W+2, 3);
-  for y:=0 to H do
-    for x:=0 to W do
-    begin
-      R := (ImgArr[y][x] and $FF);
-      G := ((ImgArr[y][x] shr 8) and $FF);
-      B := ((ImgArr[y][x] shr 16) and $FF);
-      Table[y+1][x+1][0] := (Table[y+1][x][0] + Table[y][x+1][0] - Table[y][x][0] + R);
-      Table[y+1][x+1][1] := (Table[y+1][x][1] + Table[y][x+1][1] - Table[y][x][1] + G);
-      Table[y+1][x+1][2] := (Table[y+1][x][2] + Table[y][x+1][2] - Table[y][x][2] + B);
-    end;
-
-  SetLength(AT, 3); SetLength(BT, 3);
-  SetLength(CT, 3); SetLength(DT, 3);
-  LMax := 0;
+  SetLength(Result, H+1,W+1);
+  SetLength(Filter, (Block*Block)+1);
+  mid := Block div 2;
+  Size := (Block*Block);
   for y:=0 to H do
   begin
-    y0 := Max(0, y - radius);
-    y1 := Min(h, y + radius + 1);
+    ly := Max(0,y-mid);
+    hy := Min(H,y+mid);
     for x:=0 to W do
     begin
-      x0 := Max(0, x - radius);
-      x1 := Min(W, x + radius + 1);
-      AT := Table[y0][x0];
-      BT := Table[y1][x1];
-      CT := Table[y1][x0];
-      DT := Table[y0][x1];
-      R := (AT[0] + BT[0] - CT[0] - DT[0]);
-      G := (AT[1] + BT[1] - CT[1] - DT[1]);
-      B := (AT[2] + BT[2] - CT[2] - DT[2]);
-      XO[y][x][0] := R; XO[y][x][1] := G; XO[y][x][2] := B;
-      R := Max(Max(R,G), B);
-      if LMax < R then LMax := R;
+      lx := Max(0,x-mid);
+      hx := Min(W,x+mid);
+      R := 0; G := 0; B := 0;
+      for fy:=ly to hy do
+        for fx:=lx to hx do
+        begin
+          Color := ImgArr[fy][fx];
+          R := R + (Color and $FF);
+          G := G + ((Color shr 8) and $FF);
+          B := B + ((Color shr 16) and $FF);
+        end;
+      Result[y][x] := (R div size) or
+                      ((G div size) shl 8) or
+                      ((B div size) shl 16);
     end;
   end;
-  SetLength(Table, 0);
+  SetLength(Filter, 0);
+end;
 
-  LMax := 255 / LMax;
+
+{*
+ Filter a matrix/ImgArr with a Median Filter.
+ Block is the radius of the filter, 3,5,7,9...
+*}
+{** __PRIVATE__ **}
+procedure __SortRGB(var Arr, Weight: TIntArray); Inline;
+var CurIdx, TmpIdx, Hi: Integer;
+begin
+  Hi := High(Arr);
+  for CurIdx := 1 to Hi do
+    for TmpIdx := CurIdx downto 1 do
+    begin
+      if not (Weight[TmpIdx] < Weight[TmpIdx - 1]) then
+        Break;
+      SwapI(Arr[TmpIdx], Arr[TmpIdx - 1]);
+      SwapI(Weight[TmpIdx], Weight[TmpIdx - 1]);
+    end;
+end;
+
+function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray; StdCall;
+var
+  W,H,j,x,y,low,fx,fy,mdl,size,color:Integer;
+  lx,ly,hx,hy:Integer;
+  Filter,Colors:TIntArray;
+begin
+  Size := Block * Block;
+  if (Size<=1) or (Block mod 2 = 0) then Exit(ImgArr);
+  W := High(ImgArr[0]);
+  H := High(ImgArr);
+  SetLength(Result, H+1,W+1);
+  SetLength(Filter, Size+1);
+  SetLength(Colors, Size+1);
+  low := Block div 2;
+  mdl := Size div 2;
   for y:=0 to H do
+  begin
+    ly := Max(0,y-low);
+    hy := Min(H,y+low);
     for x:=0 to W do
-      ImgArr[y][x] := (Round(LMax*XO[y][x][0])) or (Round(LMax*XO[y][x][1]) ShL 8) or (Round(LMax*XO[y][x][2]) ShL 16);
-end; 
+    begin
+      j := 0;
+      lx := Max(0,x-low);
+      hx := Min(W,x+low);
+      for fy:=ly to hy do
+        for fx:=lx to hx do
+        begin
+          Color := ImgArr[fy][fx];
+          Filter[j] := ColorToGrayL(Color);
+          Colors[j] := Color;
+          Inc(j);
+        end;
+      __SortRGB(Colors, Filter);
+      Result[y][x] := Colors[mdl];
+    end;
+  end;
+  SetLength(Colors, 0);
+  SetLength(Filter, 0);
+end;
 
 
 {*

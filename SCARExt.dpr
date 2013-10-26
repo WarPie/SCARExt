@@ -13,10 +13,11 @@ uses
   Math,
 
   XT_Types,
-  XT_HashTable,
-  XT_ColorMath,
+  XT_Standard,
   XT_Math,
   XT_Collection,
+  XT_ColorMath,
+  XT_HashTable,
   XT_Numeric,
   XT_Imaging,
   XT_Randomize,
@@ -150,9 +151,10 @@ begin
   AddCommand(@ATIAGetIndices, 'function XT_ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
   
   
-  //** CSpline.pas **//
-  AddCommand(@ImBlur,      'procedure XT_ImBlur(var ImgArr:T2DIntArray; Radius:Integer);');
-  AddCommand(@ImThreshold, 'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray;');
+  //** Imaging.pas **//
+  AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
+  AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');
+  AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray;');
   AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray;');
   AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray;');
   AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');

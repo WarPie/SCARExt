@@ -13,6 +13,7 @@ uses
 function Radians(Dgrs: Extended): Extended; Inline;
 function Degrees(Rads: Extended): Extended; Inline;
 function Modulo(X,Y:Extended): Extended; Inline; StdCall;
+function DeltaAngle(DegA,DegB:Extended): Extended; Inline; StdCall;
 function DistManhattan(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistEuclidean(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistChebyshev(const pt1,pt2: TPoint): Extended; Inline; StdCall;
@@ -25,6 +26,7 @@ function InPolyW(x,y:Integer; const Poly:TPointArray): Boolean; Inline; StdCall;
 function InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean; Inline; StdCall;
 function InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean; Inline; StdCall;
 function IsPrime(n: Integer): Boolean; Inline;
+
 
 //--------------------------------------------------
 implementation
@@ -49,6 +51,15 @@ var d: Single;
 begin
   d := X / Y;
   Result := (d - floor(d)) * Y;
+end;
+
+
+{*
+ Computes the delta of two angles. The result is in range of -180..180.
+*}
+function DeltaAngle(DegA,DegB:Extended): Extended; Inline; StdCall;
+begin
+  Result := Modulo((DegA - DegB + 180), 360) - 180;
 end;
 
 

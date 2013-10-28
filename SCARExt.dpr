@@ -71,7 +71,7 @@ begin
   AddCommand(@InPolyW,   'function XT_InPolyW(x,y:Integer; const Poly:TPointArray): Boolean;');
   AddCommand(@InEllipse,  'function XT_InEllipse(const Pt, Center:TPoint; YRad, XRad: Integer): Boolean;');
   AddCommand(@InRectange, 'function XT_InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean;');
-
+  AddCommand(@DeltaAngle, 'function XT_DeltaAngle(DegA,DegB:Extended): Extended;');
   
   //** Numeric.pas **//
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');

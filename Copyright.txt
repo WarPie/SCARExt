@@ -1,4 +1,4 @@
-Copyright (c) 2013, Jarl K. <Slacky> Holta
+Copyright (c) 2013, Jarl K. Holta || https://github.com/WarPie 
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

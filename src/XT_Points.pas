@@ -10,18 +10,18 @@ uses
   XT_Types, XT_Math, Math, SysUtils;
   
 function SamePoints(P1, P2:TPoint):Boolean; Inline;
-function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
-function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
-procedure TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
-procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
-function GetTPAMax(const TPA: TPointArray): TPoint;
-function GetTPABounds(const TPA: TPointArray): TBox;
-function GetTPAMean(const TPA: TPointArray): TPoint;
-function GetTPAMiddle(const TPA: TPointArray): TPoint;
-function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
-function GetTPABBox(const TPA:TPointArray): TPointArray; StdCall;
 procedure GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean); Inline; StdCall;
 procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPoint); Inline;
+function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
+function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
+procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
+function TPAMax(const TPA: TPointArray): TPoint;
+function TPABounds(const TPA: TPointArray): TBox;
+function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint; StdCall;
+function TPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
+function TPABBox(const TPA:TPointArray): TPointArray; StdCall;
+procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
+procedure TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
 procedure ReverseTPA(var TPA: TPointArray); StdCall;
 procedure MoveTPA(var TPA: TPointArray; SX,SY:Integer); StdCall;
 procedure TPARemoveDupes(var TPA: TPointArray); StdCall;
@@ -56,7 +56,7 @@ function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; Std
 implementation
 
 uses 
-  XT_CSpline, XT_Collection;
+  XT_CSpline, XT_Collection, XT_Sorting;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -65,270 +65,6 @@ function SamePoints(P1, P2:TPoint):Boolean; Inline;
 begin
   Result := ((P1.x = P2.x) and (P1.y = P2.y));
 end;
-
-
-{*
- Return the outer point at the angle of the vector "Center->Pt". 
- The outer point is defined as Center + Radius, and the angle of "Center->Pt".
-*}
-function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
-var
-  dx,dy: Integer;
-  Angle: Single;
-begin
-  dx := (Center.X - Pt.X);
-  dy := (Center.Y - Pt.Y);
-  Angle := ArcTan2(dy, dx) + PI;
-  Result.x := Round(Radius * Cos(Angle)) + Center.X;
-  Result.y := Round(Radius * Sin(Angle)) + Center.Y;
-end;
-
-
-{*
- Calculates the total sum of the TPA.
-*}
-function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
-var i:Integer;
-begin
-  Result := Point(0,0);
-  for i:=Low(Arr) to High(Arr) do
-  begin
-    Result.x := Result.x + Arr[i].x;
-    Result.y := Result.y + Arr[i].y;
-  end;
-end;
-
-
-{*
-  Splits the TPA in to two TIAs: X- and Y-Axis.
-*}
-procedure TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
-var i,H:Integer;
-begin
-  H := High(TPA);
-  SetLength(X, H+1);
-  SetLength(Y, H+1);
-  for i:=0 to H do
-  begin
-    X[i] := TPA[i].x;
-    Y[i] := TPA[i].y;
-  end;
-end;
-
-
-{*
-  Removes the points outside the bound.
-*}
-procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
-var i,j,H:Integer;
-begin
-  H := High(TPA);
-  j := 0;
-  for i:=0 to H do
-    if InRange(TPA[i].x, x1,x2) and InRange(TPA[i].y, y1,y2) then 
-    begin
-      TPA[j] := TPA[i];
-      Inc(j);
-    end;
-  SetLength(TPA, j);
-end;
-
-
-{*
- Return the largest numbers for x, and y-axis in TPA.
-*}
-function GetTPAMax(const TPA: TPointArray): TPoint;
-var
-  I,L : Integer;
-begin;
-  L := High(TPA);
-  if (l < 0) then Exit;
-  Result.x := TPA[0].x;
-  Result.y := TPA[0].y;
-  for I:=0 to L do
-  begin
-    if TPA[i].x > Result.x then
-      Result.x := TPA[i].x;
-    if TPA[i].y > Result.y then
-      Result.y := TPA[i].y;
-  end;
-end;
-
-
-{*
- Return the largest and the smallest numbers for x, and y-axis in TPA.
-*}
-function GetTPABounds(const TPA: TPointArray): TBox;
-var
-  I,L : Integer;
-begin;
-  FillChar(Result, SizeOf(TBox), 0);
-  L := High(TPA);
-  if (l < 0) then Exit;
-  Result.x1 := TPA[0].x;
-  Result.y1 := TPA[0].y;
-  Result.x2 := TPA[0].x;
-  Result.y2 := TPA[0].y;
-  for I:= 1 to L do
-  begin;
-    if TPA[i].x > Result.x2 then
-      Result.x2 := TPA[i].x
-    else if TPA[i].x < Result.x1 then
-      Result.x1 := TPA[i].x;
-    if TPA[i].y > Result.y2 then
-      Result.y2 := TPA[i].y
-    else if TPA[i].y < Result.y1 then
-      Result.y1 := TPA[i].y;
-  end;
-end;
-
-
-{*
- Returns the most outer points in the TPA, requres a tpa of atleast 4 points.
- Similar to GetTPABounds, except it returns the actuall points.
-*}
-function GetTPAExtremes(const TPA:TPointArray): TPointArray; StdCall;
-var
-  I,L : Integer;
-begin
-  L := High(TPA);
-  if (l < 3) then Exit; 
-  SetLength(Result, 4);
-  Result[0] := TPA[0];
-  Result[1] := TPA[0];
-  Result[2] := TPA[0];
-  Result[3] := TPA[0];
-  for I:= 1 to L do
-  begin
-    if TPA[i].x > Result[0].x then
-      Result[0] := TPA[i] 
-    else if TPA[i].x < Result[2].x then
-      Result[2] := TPA[i]; 
-    if TPA[i].y > Result[1].y then
-      Result[1] := TPA[i]
-    else if TPA[i].y < Result[3].y then
-      Result[3] := TPA[i]; 
-  end;
-end;
-
-
-{*
- Mean as in defined by SumTPA divided by Length.
-*}
-function GetTPAMean(const TPA: TPointArray): TPoint;
-var
-  l: Integer;
-begin
-  l := Length(TPA);
-  if (l > 0) then
-  begin
-    Result := SumTPA(TPA);
-    Result := Point((Result.X div l), (Result.Y div l));
-  end else
-    Result := Point(0, 0);
-end;
-
-
-{*
- Middle as in defined by the center of the shape's outer bounds.
-*}
-function GetTPAMiddle(const TPA: TPointArray): TPoint;
-var
-  l: Integer;
-  B : Tbox;
-begin
-  l := Length(TPA);
-  if (l > 0) then
-  begin
-    B := GetTPABounds(TPA);
-    Result.X := (B.X2 + B.X1) div 2;
-    Result.Y := (B.Y2 + B.Y1) div 2;
-  end else
-    Result := Point(0, 0);
-end;
-
-
-{*
- Returns the minimum bounding rectangle around the given TPA.
-*}
-function GetTPABBox(const TPA:TPointArray): TPointArray; StdCall;
-var
-  L,i,j,v,c,edge_x,edge_y,w,h:Integer; 
-  halfpi,X,Y,cosA,cosAP,CosAM: Extended;
-  xl,yl,xh,yh,Area,Angle:Extended; 
-  Shape:TPointArray;
-  Angles,BBox:TExtArray;
-  added:Boolean;
-  pt:TPoint;
-begin
-  SetLength(Result, 4); 
-  if Length(TPA) <= 1 then Exit;
-  Shape := ConvexHull(TPA);
-  L := Length(Shape) - 1;
-  halfpi := (PI/2);
-  SetLength(angles, L);
-  
-  j := 0;    
-  for i:=0 to (L-1) do
-  begin
-    Angles[j] := PI; //Init with number greater then halfpi
-    Added := False;
-    edge_x := Shape[i+1].x - Shape[i].x;
-    edge_y := Shape[i+1].y - Shape[i].y; 
-    Angle := Abs(Modulo(ArcTan2(edge_y, edge_x), halfpi));
-    for c:=0 to j do
-      if (angles[c] = Angle) then Added := True; 
-    if not(Added) then begin 
-      angles[j] := Angle;
-      Inc(j);
-    end;     
-  end;                    
-  SetLength(angles, j); 
-  SetLength(BBox, 6);
-  BBox[1] := MaxInt;
-  for i:=0 to j-1 do
-  begin  
-    CosA := Cos(angles[i]);
-    CosAP := Cos(angles[i]+halfpi);
-    CosAM := Cos(angles[i]-halfpi);
-    xl := (CosA*shape[0].x) + (CosAM*shape[0].y); 
-    yl := (CosAP*shape[0].x) + (CosA*shape[0].y);
-    xh := xl;
-    yh := yl;
-    for v:=0 to L do
-    begin
-      pt := shape[v];
-      x  := (cosA*pt.x) + (cosAM*pt.y); 
-      y  := (cosAP*pt.x) + (cosA*pt.y);
-      if (x > xh) then xh := x
-      else if (x < xl) then xl := x;
-      if (y > yh) then yh := y
-      else if (y < yl) then yl := y;
-    end;
-    Area := (xh-xl)*(yh-yl);
-    if (Area < bbox[1]) then begin
-      BBox[0] := Angles[i];
-      BBox[1] := Area;
-      BBox[2] := xl;
-      BBox[3] := xh;
-      BBox[4] := yl;
-      BBox[5] := yh;
-    end;
-  end;
-  Angle := bbox[0];   
-  cosA  := Cos(Angle);
-  cosAP := Cos(Angle+halfpi);
-  cosAM := Cos(Angle-halfpi);
-  xl := bbox[2];
-  xh := bbox[3];
-  yl := bbox[4];
-  yh := bbox[5];
-  Result[0] := Point(Round((cosAP*yl) + (cosA*xh)), Round((cosA*yl) + (cosAM*xh)));
-  Result[1] := Point(Round((cosAP*yl) + (cosA*xl)), Round((cosA*yl) + (cosAM*xl)));
-  Result[2] := Point(Round((cosAP*yh) + (cosA*xl)), Round((cosA*yh) + (cosAM*xl)));
-  Result[3] := Point(Round((cosAP*yh) + (cosA*xh)), Round((cosA*yh) + (cosAM*xh)));
-end;
-
 
 {*
  Return the neighbours of the given TPoint defined by `n`.
@@ -371,9 +107,341 @@ end;
 
 
 {*
+ Return the outer point at the angle of the vector "Center->Pt". 
+ The outer point is defined as Center + Radius, and the angle of "Center->Pt".
+*}
+function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
+var
+  dx,dy: Integer;
+  Angle: Single;
+begin
+  dx := (Center.X - Pt.X);
+  dy := (Center.Y - Pt.Y);
+  Angle := ArcTan2(dy, dx) + PI;
+  Result.x := Round(Radius * Cos(Angle)) + Center.X;
+  Result.y := Round(Radius * Sin(Angle)) + Center.Y;
+end;
+
+
+{*
+ Calculates the total sum of the TPA.
+*}
+function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
+var i:Integer;
+begin
+  Result := Point(0,0);
+  for i:=Low(Arr) to High(Arr) do
+  begin
+    Result.x := Result.x + Arr[i].x;
+    Result.y := Result.y + Arr[i].y;
+  end;
+end;
+
+
+{*
+  Splits the TPA in to two TIAs: X- and Y-Axis.
+*}
+procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
+var i,H:Integer;
+begin
+  H := High(TPA);
+  SetLength(X, H+1);
+  SetLength(Y, H+1);
+  for i:=0 to H do
+  begin
+    X[i] := TPA[i].x;
+    Y[i] := TPA[i].y;
+  end;
+end;
+
+
+{*
+ Return the largest numbers for x, and y-axis in TPA.
+*}
+function TPAMax(const TPA: TPointArray): TPoint;
+var
+  I,L : Integer;
+begin;
+  L := High(TPA);
+  if (l < 0) then Exit;
+  Result.x := TPA[0].x;
+  Result.y := TPA[0].y;
+  for I:=0 to L do
+  begin
+    if TPA[i].x > Result.x then
+      Result.x := TPA[i].x;
+    if TPA[i].y > Result.y then
+      Result.y := TPA[i].y;
+  end;
+end;
+
+
+{*
+ Return the largest and the smallest numbers for x, and y-axis in TPA.
+*}
+function TPABounds(const TPA: TPointArray): TBox;
+var
+  I,L : Integer;
+begin;
+  FillChar(Result, SizeOf(TBox), 0);
+  L := High(TPA);
+  if (l < 0) then Exit;
+  Result.x1 := TPA[0].x;
+  Result.y1 := TPA[0].y;
+  Result.x2 := TPA[0].x;
+  Result.y2 := TPA[0].y;
+  for I:= 1 to L do
+  begin;
+    if TPA[i].x > Result.x2 then
+      Result.x2 := TPA[i].x
+    else if TPA[i].x < Result.x1 then
+      Result.x1 := TPA[i].x;
+    if TPA[i].y > Result.y2 then
+      Result.y2 := TPA[i].y
+    else if TPA[i].y < Result.y1 then
+      Result.y1 := TPA[i].y;
+  end;
+end;
+
+
+{*
+ Returns the most outer points in the TPA, requres a tpa of atleast 4 points.
+ Similar to TPABounds, except it returns the actuall points.
+*}
+function TPAExtremes(const TPA:TPointArray): TPointArray; StdCall;
+var
+  I,L : Integer;
+begin
+  L := High(TPA);
+  if (l < 3) then Exit; 
+  SetLength(Result, 4);
+  Result[0] := TPA[0];
+  Result[1] := TPA[0];
+  Result[2] := TPA[0];
+  Result[3] := TPA[0];
+  for I:= 1 to L do
+  begin
+    if TPA[i].x > Result[0].x then
+      Result[0] := TPA[i] 
+    else if TPA[i].x < Result[2].x then
+      Result[2] := TPA[i]; 
+    if TPA[i].y > Result[1].y then
+      Result[1] := TPA[i]
+    else if TPA[i].y < Result[3].y then
+      Result[3] := TPA[i]; 
+  end;
+end;
+
+
+
+{*
+ Mean, Median, and two diffrent ways to define "centers"..
+ @params
+ | Method: CM_Mean | CM_Median | CM_Bounds | CM_BBox.
+ | Inside: True | False .. If True then the result is always inside the shape.
+*}
+function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint; StdCall;
+var
+  Len, Mid: Integer;
+  TMP:TPointArray;
+  X,Y:TIntArray;
+  Area: Tbox;
+begin
+  Len := Length(TPA);
+  if (Len <= 0) then Exit(Point(0, 0));
+  if (Len = 1) then Exit(TPA[0]);
+  case Method of
+  CM_Bounds:
+    begin
+      Area := TPABounds(TPA);
+      Result.X := Round((Area.X2 + Area.X1) / 2);
+      Result.Y := Round((Area.Y2 + Area.Y1) / 2);
+    end;
+  CM_BBox:
+    begin
+      TMP := TPABBox(TPA);
+      Result.x := Round((TMP[0].x + TMP[2].x) / 2);
+      Result.y := Round((TMP[1].y + TMP[3].y) / 2);
+      SetLength(TMP, 0);
+    end;
+  CM_Mean:
+    begin
+      Result := SumTPA(TPA);
+      Result.x := Round(Result.X / Len);
+      Result.y := Round(Result.Y / Len);
+    end;
+  CM_Median:
+    begin
+      TPASplitAxis(TPA, X,Y);
+      SortTIA(X);
+      SortTIA(Y);
+      Mid := Len div 2;
+      if (Len mod 2) = 0 then begin
+        Result := Point(X[Mid], Y[Mid]);
+      end else begin
+        Result.x := Round((X[Mid] + X[Mid+1]) / 2);
+        Result.y := Round((Y[Mid] + Y[Mid+1]) / 2);
+      end;
+    end;
+  end;
+  if Inside then
+  begin
+    TMP := Copy(TPA);
+    SortTPAFrom(TMP, Result);
+    Result := TMP[0];
+    SetLength(TMP, 0);
+  end;
+end;
+
+
+
+{*
+ Returns the minimum bounding rectangle around the given TPA. 
+ The function is a little clumsy written, but it does the trick.
+*}
+function TPABBox(const TPA:TPointArray): TPointArray; StdCall;
+var
+  L,i,j,v,c,edge_x,edge_y,w,h:Integer; 
+  halfpi,X,Y,cosA,cosAP,CosAM: Extended;
+  xl,yl,xh,yh,Area,Angle:Extended; 
+  Shape:TPointArray;
+  Angles,BBox:TExtArray;
+  added:Boolean;
+  pt:TPoint;
+begin
+  SetLength(Result, 4); 
+  if Length(TPA) <= 1 then Exit;
+  Shape := ConvexHull(TPA);
+  L := Length(Shape) - 1;
+  halfpi := (PI/2);
+  SetLength(angles, L);
+  
+  j := 0;    
+  for i:=0 to (L-1) do
+  begin
+    Angles[j] := PI; //Init with number greater then halfpi
+    Added := False;
+    edge_x := Shape[i+1].x - Shape[i].x;
+    edge_y := Shape[i+1].y - Shape[i].y; 
+    Angle := Abs(Modulo(ArcTan2(edge_y, edge_x), halfpi));
+    for c:=0 to j do
+      if (angles[c] = Angle) then Added := True; 
+    if not(Added) then begin 
+      angles[j] := Angle;
+      Inc(j);
+    end;     
+  end;                    
+  SetLength(angles, j); 
+  SetLength(BBox, 6);
+  BBox[1] := MaxInt;
+  for i:=0 to j-1 do
+  begin  
+    CosA := Cos(Angles[i]);
+    CosAP := Cos(Angles[i]+halfpi);
+    CosAM := Cos(Angles[i]-halfpi);
+    xl := (CosA*Shape[0].x) + (CosAM*Shape[0].y);
+    yl := (CosAP*Shape[0].x) + (CosA*Shape[0].y);
+    xh := xl;
+    yh := yl;
+    for v:=0 to L do
+    begin
+      pt := Shape[v];
+      x  := (CosA*pt.x) + (CosAM*pt.y);
+      y  := (CosAP*pt.x) + (CosA*pt.y);
+      if (x > xh) then xh := x
+      else if (x < xl) then xl := x;
+      if (y > yh) then yh := y
+      else if (y < yl) then yl := y;
+    end;
+    Area := (xh-xl)*(yh-yl);
+    if (Area < bbox[1]) then begin
+      BBox[0] := Angles[i];
+      BBox[1] := Area;
+      BBox[2] := xl;
+      BBox[3] := xh;
+      BBox[4] := yl;
+      BBox[5] := yh;
+    end;
+  end;
+  Angle := bbox[0];   
+  cosA  := Cos(Angle);
+  cosAP := Cos(Angle+halfpi);
+  cosAM := Cos(Angle-halfpi);
+  xl := bbox[2];
+  xh := bbox[3];
+  yl := bbox[4];
+  yh := bbox[5];
+  Result[0] := Point(Round((cosAP*yl) + (cosA*xh)), Round((cosA*yl) + (cosAM*xh)));
+  Result[1] := Point(Round((cosAP*yl) + (cosA*xl)), Round((cosA*yl) + (cosAM*xl)));
+  Result[2] := Point(Round((cosAP*yh) + (cosA*xl)), Round((cosA*yh) + (cosAM*xl)));
+  Result[3] := Point(Round((cosAP*yh) + (cosA*xh)), Round((cosA*yh) + (cosAM*xh)));
+
+  SetLength(angles, 0); 
+  SetLength(BBox, 0);
+  SetLength(Shape, 0);
+end;
+
+
+{*
+  Removes the points from the TPA that is NOT in the given shape.
+  `From` is used if the shape is not at the same position as the TPA, it will
+  add or subsract the values (x,y) to/from the points in TPA.
+*}
+procedure TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
+var 
+  i,j,size,W,H,x,y:Integer;
+  Matrix:T2DBoolArray;
+  Area:TBox;
+begin
+  Size := High(TPA);
+  if Size<0 then Exit;
+  Area := TPABounds(TPA);
+  W := (Area.x2 - Area.x1) + 1;
+  H := (Area.y2 - Area.y1) + 1;
+  SetLength(Matrix, H,W);
+  for i:=0 to Size do
+    Matrix[TPA[i].y - Area.y1][TPA[i].x - Area.x1] := True;
+
+  j := 0;
+  for i:=0 to High(Shape) do
+  begin
+    x := (Shape[i].x - Area.X1) + From.x;
+    y := (Shape[i].y - Area.Y1) + From.y;
+    if (x>=0) and (x<W) and (y>=0) and (y<H) then
+      if Matrix[y][x] then
+      begin
+        TPA[j] := Shape[i];
+        Inc(j);
+      end;
+  end;
+  SetLength(TPA, j);
+  SetLength(Matrix, 0);
+end;
+
+
+{*
+  Removes the points outside the bound.
+*}
+procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
+var i,j,H:Integer;
+begin
+  H := High(TPA);
+  j := 0;
+  for i:=0 to H do
+    if (TPA[i].x>=x1) and (TPA[i].x<=x2) and
+       (TPA[i].y>=y1) and (TPA[i].y<=y2) then
+    begin
+      TPA[j] := TPA[i];
+      Inc(j);
+    end;
+  SetLength(TPA, j);
+end;
+
+
+{*
  Reverses the TPointArray / flips it (Self note: list[::-1]).
 *}
-procedure ReverseTPA(var TPA: TPointArray); StdCall; //Untested.
+procedure ReverseTPA(var TPA: TPointArray); StdCall; 
 var 
   i, Hi, Mid: Integer;
   tmp:TPoint;
@@ -415,7 +483,7 @@ var
 begin;
   H := High(TPA);
   if (H <= 0) then Exit;
-  b := GetTPABounds(TPA);
+  b := TPABounds(TPA);
   Matrix := BoolMatrixNil((b.X2 - b.X1) + 1, (b.Y2 - b.Y1) + 1);
   j := 0;
   for i:=0 to H do
@@ -466,7 +534,7 @@ var
   i,h,x,y: Integer;
   Area: TBox;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2-Area.X1);
   Area.Y2 := (Area.Y2-Area.Y1);
   Matrix := BoolMatrixNil(Area.X2+1, Area.Y2+1);
@@ -532,7 +600,7 @@ var
 begin
   H := High(TPA);
   if (H < 0) then Exit;
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2 - Area.X1) + 1;  //Width
   Area.Y2 := (Area.Y2 - Area.Y1) + 1;  //Height
   Cols := Ceil(Area.X2 / BoxWidth);
@@ -559,15 +627,13 @@ var
   A,B:TPoint;
 begin
   case Method of
-    AM_Extremes:Shape := GetTPAExtremes(TPA);
+    AM_Extremes:Shape := TPAExtremes(TPA);
     AM_Convex:  Shape := ConvexHull(TPA);
-    AM_BBox:    Shape := GetTPABBox(TPA);
+    AM_BBox:    Shape := TPABBox(TPA);
   end;
   LongestPolyVector(Shape, A,B);
   Angle := ArcTan2(-(B.y-A.y),(B.x-A.x));
-  //if (Angle > 2.95) then Angle := (PI-Angle)
-  //else if (Angle < -2.95) then Angle := (Angle-PI);     //Remove if causes problems or confusion.
-  Result := RotateTPAEx(TPA, GetTPAMiddle(TPA), Angle);
+  Result := RotateTPAEx(TPA, TPACenter(TPA, CM_Bounds, False), Angle);
   SetLength(Shape, 0);
   Angle := Modulo(Degrees(Angle), 360);  //Always in range of 0 and 359 dgr!
 end;
@@ -584,7 +650,7 @@ var
   i, C, H, idx, x, y: Integer;
   Area: TBox;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2-Area.X1);
   Area.Y2 := (Area.Y2-Area.Y1);
   H := High(TPA);
@@ -630,7 +696,7 @@ begin
 
   if RemoveDupes then
   begin
-    Area := GetTPABounds(Result);
+    Area := TPABounds(Result);
     Matrix := BoolMatrixNil((Area.X2-Area.X1)+1, (Area.Y2-Area.Y1)+1);
     j := 0;
     for I:=Low(Result) to High(Result) do
@@ -964,7 +1030,7 @@ var
   Matrix:T2DBoolArray;
   Area: TBox;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.x2 := (Area.x2 - Area.x1) + 1;
   Area.y2 := (Area.y2 - Area.y1) + 1;
   Matrix := BoolMatrixNil(Area.x2+1, Area.y2+1);
@@ -1038,7 +1104,7 @@ var
   Area: TBox;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2 - Area.X1) + 1;  //Width
   Area.Y2 := (Area.Y2 - Area.Y1) + 1;  //Height
 
@@ -1115,7 +1181,7 @@ var
   isset:Boolean;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2 - Area.X1) + 3;  //Width
   Area.Y2 := (Area.Y2 - Area.Y1) + 3;  //Height
   Area.X1 := Area.X1 - 1;
@@ -1215,7 +1281,7 @@ var
   queue, face:TPointArray;
   pt,adj:TPoint;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.x1 := Area.x1 - 3;
   Area.y1 := Area.y1 - 3;
   W := (Area.x2 - Area.x1) + 1;
@@ -1390,7 +1456,7 @@ var
   iter : Boolean;
   Area: TBox;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.x1 := Area.x1 - 2;
   Area.y1 := Area.y1 - 2;
   Area.x2 := (Area.x2 - Area.x1) + 2;

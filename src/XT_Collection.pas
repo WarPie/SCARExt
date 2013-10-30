@@ -63,7 +63,7 @@ var
   Area:TBox;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
 
@@ -102,7 +102,7 @@ var
   Area:TBox;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
 
@@ -168,7 +168,7 @@ var
   Area:TBox;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
   
@@ -208,7 +208,7 @@ var
   Area:TBox;
 begin
   H := High(TPA);
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
   

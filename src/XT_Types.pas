@@ -47,6 +47,7 @@ type
   //
   TAlignMethod = (AM_Extremes, AM_Convex, AM_BBox);
   TThreshMethod = (TM_Mean, TM_MinMax);
+  TCenterMethod = (CM_Bounds, CM_BBox, CM_Mean, CM_Median);
 
 
 function Box(const x1,y1,x2,y2:Integer): TBox; Inline;

@@ -29,7 +29,7 @@ var
   tmp: T2DPointArray;
   Area,B:TBox;
 begin
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2 - Area.X1) + 1;
   Area.Y2 := (Area.Y2 - Area.Y1) + 1;
   cols := (Ceil(Area.X2 / BoxRad));
@@ -52,7 +52,7 @@ begin
     begin
       if Length(tmp[(y * cols + x)]) >= 1 then
       begin
-        B := GetTPABounds(tmp[(y * cols + x)]);
+        B := TPABounds(tmp[(y * cols + x)]);
         l := l + 4;
         SetLength(Result, l);
         Result[l-1] := Point(B.x1,B.y1);
@@ -87,7 +87,7 @@ begin
     TPA := __SplitBoxesGetBounds(PTS, EstimateRad);
   end else
     TPA := PTS;
-  Area := GetTPABounds(TPA);
+  Area := TPABounds(TPA);
   Area.X2 := (Area.X2 - Area.X1) + 1;  //Width
   Area.Y2 := (Area.Y2 - Area.Y1) + 1;  //Height
   H := High(TPA);

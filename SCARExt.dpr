@@ -1,6 +1,6 @@
 library SCARExt;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
- Copyright (c) 2013, Jarl K. <Slacky> Holta || http://github.com/WarPie
+ Copyright (c) 2013, Jarl K. Holta || http://github.com/WarPie
  All rights reserved.
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
@@ -8,8 +8,6 @@ library SCARExt;
 uses
   FastShareMem,
   SysUtils,
-  Classes,
-  Windows,
   Math,
 
   XT_Types,
@@ -26,7 +24,6 @@ uses
   XT_Finder,
   XT_CSpline,
   XT_DensityMap,
-  XT_ContrastEdges,
   XT_TPAExtShape;
 
   
@@ -65,6 +62,7 @@ begin
   AddCommand(@DistChebyshev, 'function XT_DistChebyshev(pt1,pt2: TPoint): Extended;');
   AddCommand(@DistOctagonal, 'function XT_DistOctagonal(pt1,pt2: TPoint): Extended;');
   AddCommand(@Modulo,     'function XT_Modulo(X,Y:Extended): Extended;');
+  AddCommand(@Modulo,     'function XT_Mod(X,Y:Extended): Extended;'); //Alias^
   AddCommand(@InCircle,   'function XT_InCircle(const Pt, Center: TPoint; Radius: Integer): Boolean;');
   AddCommand(@InPoly,     'function XT_InPoly(x,y:Integer; const Poly:TPointArray): Boolean;');
   AddCommand(@InPolyR,   'function XT_InPolyR(x,y:Integer; const Poly:TPointArray): Boolean;');
@@ -73,6 +71,7 @@ begin
   AddCommand(@InRectange, 'function XT_InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean;');
   AddCommand(@DeltaAngle, 'function XT_DeltaAngle(DegA,DegB:Extended): Extended;');
   
+  
   //** Numeric.pas **//
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
   AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
@@ -80,18 +79,21 @@ begin
   AddCommand(@SumTEA,    'function XT_SumTEA(const Arr: TExtArray): Extended;');
   AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
   AddCommand(@TIAToATIA, 'function XTCore_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
-
+  
+  
   //** Sorting.pas **//
   AddCommand(@SortTIA, 'procedure XT_SortTIA(var Arr: TIntArray);');
   AddCommand(@SortTEA, 'procedure XT_SortTEA(var Arr: TExtArray);');
   AddCommand(@SortTPA, 'procedure XT_SortTPA(var Arr: TPointArray);');
+  AddCommand(@SortTPAFrom, 'procedure XT_SortTPAFrom(var Arr: TPointArray; const From:TPoint);');
   AddCommand(@SortTPAByRow,    'procedure XT_SortTPAByRow(var Arr: TPointArray);');
   AddCommand(@SortTPAByColumn, 'procedure XT_SortTPAByColumn(var Arr: TPointArray);');
-
+  
+  
   //** Finder.pas **//
   AddCommand(@FindColorTolExLCH, 'function XTCore_FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   AddCommand(@FindColorTolExLAB, 'function XTCore_FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
-
+  
   
   //** DensityMap.pas **//
   AddCommand(@DensityMap,       'function XT_DensityMap(const TPA:TPointArray; Radius, Passes:Integer): T2DExtArray;');
@@ -101,11 +103,14 @@ begin
   
   //** Points.pas **//
   AddCommand(@SumTPA,          'function XT_SumTPA(Arr: TPointArray): TPoint;');
-  AddCommand(@TPASeparateAxis, 'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
+  AddCommand(@TPASplitAxis,    'procedure XT_TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
+  AddCommand(@TPASplitAxis,    'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);'); //Alias ^
+  AddCommand(@TPAExtract,      'procedure XT_TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const TopLeft:TPoint);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
-  AddCommand(@GetTPAExtremes,  'function XT_GetTPAExtremes(const TPA:TPointArray): TPointArray;');
-  AddCommand(@GetTPABBox,      'function XT_GetTPABBox(const TPA:TPointArray): TPointArray;');
-  AddCommand(@GetTPABBox,      'function XT_GetTPABoundingBox(const TPA:TPointArray): TPointArray;'); //Alias ^
+  AddCommand(@TPAExtremes,     'function XT_TPAExtremes(const TPA:TPointArray): TPointArray;');
+  AddCommand(@TPABBox,         'function XT_TPABBox(const TPA:TPointArray): TPointArray;');
+  AddCommand(@TPABBox,         'function XT_TPABoundingBox(const TPA:TPointArray): TPointArray;'); //Alias ^
+  AddCommand(@TPACenter,       'function XT_TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint;');
   AddCommand(@GetAdjacent,     'procedure XT_GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean);');
   AddCommand(@ReverseTPA,      'procedure XT_ReverseTPA(var TPA: TPointArray);');
   AddCommand(@MoveTPA,         'procedure XT_MoveTPA(var TPA: TPointArray; SX,SY:Integer);');
@@ -133,14 +138,14 @@ begin
   AddCommand(@ClusterTPAEx,    'function XT_ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray;');
   AddCommand(@ClusterTPA,      'function XT_ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean): T2DPointArray;');
   AddCommand(@TPASkeleton,     'function XT_TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray;');
-
+  
   //** CSpline.pas **//
   AddCommand(@CSpline, 'function XT_CSpline(const TPA:TPointArray; Tension:Extended; Connect:Boolean): TPointArray;');
-
+  
   //** TPAExtShape.pas **//
   AddCommand(@TPAExtractShape, 'function XT_TPAExtractShape(const PTS:TPointArray; Distance, EstimateRad:Integer): TPointArray;');
-
-
+  
+  
   //** Collection.pas **//
   AddCommand(@IntMatrix,       'function XT_IntMatrix(W,H, Init:Integer): T2DIntArray;');
   AddCommand(@IntMatrixNil,    'function XT_IntMatrixNil(W,H:Integer): T2DIntArray;');
@@ -148,12 +153,12 @@ begin
   AddCommand(@BoolMatrix,      'function XT_BoolMatrix(W,H:Integer; Init:Boolean): T2DBoolArray;');
   AddCommand(@BoolMatrixNil,   'function XT_BoolMatrixNil(W,H:Integer): T2DBoolArray;');
   AddCommand(@BoolMatrixSetPts,'procedure XT_BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint);');
-
+  
   AddCommand(@TPAToIntMatrix,     'function XT_TPAToIntMatrix(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray;');
   AddCommand(@TPAToIntMatrixNil,  'function XT_TPAToIntMatrixNil(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray;');
   AddCommand(@TPAToBoolMatrix,    'function XT_TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray;');
   AddCommand(@TPAToBoolMatrixNil, 'function XT_TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DIntArray;');
-
+  
   AddCommand(@NormalizeATIA,  'function XT_NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
   AddCommand(@ATIAGetIndices, 'function XT_ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
   
@@ -165,12 +170,12 @@ begin
   AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray;');
   AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray;');
   AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
-
+  
   
   //** Randomize.pas **//
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
   AddCommand(@RandomCenterTPA,'function XT_RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray;');
-  
+  AddCommand(@RandomTIA,      'function XT_RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray;');
   CommandsLoaded := True;
 end;
 
@@ -203,7 +208,7 @@ end;
 
 function GetTypeCount: Integer; StdCall;
 begin
-  Result := 2;
+  Result := 3;
 end;
 
 function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
@@ -216,6 +221,10 @@ begin
     1:begin
         sType := 'TThreshMethod';
         sTypeDef := '(TM_Mean, TM_MinMax);';
+      end;
+    2:begin
+      sType := 'TCenterMethod';
+      sTypeDef := '(CM_Bounds, CM_BBox, CM_Mean, CM_Median);';
       end;
   else
     x := -1;

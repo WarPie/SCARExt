@@ -75,7 +75,7 @@ end;
 function DensityMap(const TPA:TPointArray; Radius, Passes:Integer): T2DExtArray; StdCall;
 begin
   if Length(TPA) <= 0 then Exit;
-  Result := __DensityMap(TPA, Radius, Passes, GetTPABounds(TPA));
+  Result := __DensityMap(TPA, Radius, Passes, TPABounds(TPA));
 end;
 
 
@@ -86,7 +86,7 @@ var
   Mat: T2DExtArray;
 begin
   if Length(TPA) <= 0 then Exit;
-  Mat := __DensityMap(TPA, Radius, Passes, GetTPABounds(TPA));
+  Mat := __DensityMap(TPA, Radius, Passes, TPABounds(TPA));
   W := High(Mat[0]);
   H := High(Mat);
   mx := 0;
@@ -115,7 +115,7 @@ var
 begin
   len := Length(Arr);
   if len <= 0 then Exit;
-  Area := GetTPABounds(Arr);
+  Area := TPABounds(Arr);
   Matrix := __DensityMap(Arr, Radius, Passes, Area);
   
   gap := 0;

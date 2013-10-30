@@ -10,7 +10,7 @@ uses
   
 function RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray; StdCall;  
 function RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray; StdCall;
-
+function RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray; StdCall;
 
 //--------------------------------------------------
 implementation
@@ -40,5 +40,15 @@ begin
     Result[i].y := RandomRange(Round(CY-y), Round(CY+y));
   end;
 end;
+
+
+function RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray; StdCall;
+var i:Integer;
+begin
+  SetLength(Result, Amount);
+  for i:=0 to Amount-1 do
+    Result[i] := RandomRange(Low,Hi);
+end; 
+
 
 end.

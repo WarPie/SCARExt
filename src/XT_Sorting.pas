@@ -13,6 +13,7 @@ uses
 procedure SortTIA(var Arr: TIntArray); StdCall;
 procedure SortTEA(var Arr: TExtArray); StdCall;
 procedure SortTPA(var Arr: TPointArray); StdCall;
+procedure SortTPAFrom(var Arr: TPointArray; const From:TPoint); StdCall;
 procedure SortTPAbyRow(var Arr: TPointArray); StdCall;
 procedure SortTPAbyColumn(var Arr: TPointArray); StdCall;
 
@@ -150,6 +151,20 @@ begin
   SetLength(Weight, 0);
 end;
 
+//Sort TPA by Distance from a TPoint `From`.
+procedure SortTPAFrom(var Arr: TPointArray; const From:TPoint); StdCall;
+var
+  i,Hi: Integer;
+  Weight:TIntArray;
+begin
+  Hi := High(Arr);
+  SetLength(Weight, Hi+1);
+  for i := 0 to Hi do
+    Weight[i] := Sqr(From.x-Arr[i].x) + Sqr(From.y-Arr[i].y);
+  __SortTPA(Arr, Weight, Low(Arr), High(Arr));
+  SetLength(Weight, 0);
+end;
+
 //Sort TPA by Row.
 procedure SortTPAbyRow(var Arr: TPointArray); StdCall;
 var
@@ -157,7 +172,7 @@ var
   Weight:TIntArray;
   Area : TBox;
 begin
-  Area := GetTPABounds(Arr);
+  Area := TPABounds(Arr);
   W := Area.X2-Area.X1+1;
   Hi := High(Arr);
   SetLength(Weight, Hi+1);
@@ -174,7 +189,7 @@ var
   Weight:TIntArray;
   Area : TBox;
 begin
-  Area := GetTPABounds(Arr);
+  Area := TPABounds(Arr);
   H := Area.Y2-Area.Y1+1;
   Hi := High(Arr);
   SetLength(Weight, Hi+1);

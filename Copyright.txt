@@ -25,10 +25,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPECIAL CASES:
 
 >> http://github.com/MerlijnWajer/Simba
-I grant access to use what I have created under the following conidtion: 
+I grant access to use what I have created under the following condition: 
 | My name is required to be shown at the top of the files where code from SCARExt is used.
 
 
 >> http://github.com/Janilaboo/Pumbaa
-I grant access to use what I have created under the following conidtion: 
+I grant access to use what I have created under the following condition: 
 | My name/or first name and nick must be shown in files where code from SCARExt is used.

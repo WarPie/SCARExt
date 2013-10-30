@@ -27,7 +27,6 @@ SPECIAL CASES:
 >> http://github.com/MerlijnWajer/Simba
 I grant access to use what I have created under the following conidtion: 
 | My name is required to be shown at the top of the files where code from SCARExt is used.
-| Lisence is "converted" to GNU GPL v3 or later, see <http://www.gnu.org/licenses/>.
 
 
 >> http://github.com/Janilaboo/Pumbaa

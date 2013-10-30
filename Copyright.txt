@@ -1,4 +1,4 @@
-Copyright (c) 2013, Jarl K. Holta || https://github.com/WarPie 
+Copyright (c) 2013, Jarl K. Holta || https://github.com/WarPie
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -17,3 +17,19 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
+#----------------------------------------------------------------------------
+
+SPECIAL CASES:
+
+>> http://github.com/MerlijnWajer/Simba
+I grant access to use what I have created under the following conidtion: 
+| My name is required to be shown at the top of the files where code from SCARExt is used.
+| Lisence is "converted" to GNU GPL v3 or later, see <http://www.gnu.org/licenses/>.
+
+
+>> http://github.com/Janilaboo/Pumbaa
+I grant access to use what I have created under the following conidtion: 
+| My name/or first name and nick must be shown in files where code from SCARExt is used.

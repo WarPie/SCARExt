@@ -4,12 +4,13 @@ unit XT_Sorting;
  All rights reserved.
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
-
+(* Pretty fast sorting *)
 interface
 
 uses
   XT_Types, XT_Standard, XT_Points;
 
+procedure InsSort(Arr:TIntArray; Left, Right:Integer); Inline;
 procedure SortTIA(var Arr: TIntArray); StdCall;
 procedure SortTEA(var Arr: TExtArray); StdCall;
 procedure SortTPA(var Arr: TPointArray); StdCall;
@@ -20,28 +21,46 @@ procedure SortTPAbyColumn(var Arr: TPointArray); StdCall;
 //-----------------------------------------------------------------------
 implementation
 
+(*
+ Fast integer sorting from sall arrays, or small parts of arrays.
+*)
+procedure InsSort(Arr:TIntArray; Left, Right:Integer); Inline;
+var i, j, tmp:Integer;
+begin
+  for i := Left+1 to Right do begin
+    j := i-1;
+    Tmp := arr[i];
+    while (j >= Left) and (Arr[j] > Tmp) do begin
+      Arr[j+1] := Arr[j];
+      j:=j-1;
+    end;
+    Arr[j+1] := Tmp;
+  end;
+end;
+
 
 (*
  Sorting array of integers!
- It uses a combination of Insertion- And Quick-Sort.
 *)
 procedure __SortTIA(Arr:TIntArray; Left, Right:Integer);
-var
-  i, j : Integer;
-  pivot: Integer;
+var i,j,pivot: Integer;
 begin
-  if Right <= Left+11 then
+  if Right < Left+15 then
   begin
-    for i := Left to Right do
-      for j := i downto 1 do begin
-        if not (Arr[j] < Arr[j - 1]) then Break;
-        ExchI(Arr[j - 1], Arr[j]);
+    for i := Left+1 to Right do begin
+      j := i-1;
+      pivot := arr[i];
+      while (j >= Left) and (arr[j] > pivot) do begin
+        Arr[j+1] := Arr[j];
+        j:=j-1;
       end;
+      arr[j+1] := pivot;
+    end;
     Exit;
   end;
   i:=Left;
   j:=Right;
-  pivot := Arr[(Left + Right) shr 1];
+  pivot := Arr[(left+right) shr 1];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
@@ -51,9 +70,9 @@ begin
       i:=i+1;
     end;
   until (i>j);
-  if Left<j then __SortTIA(Arr, Left,j);
-  if i<Right then __SortTIA(Arr, i,Right);
-end;
+  if (Left < j) then __SortTIA(Arr, Left,j);
+  if (i < Right) then __SortTIA(Arr, i,Right);
+end; 
 
 procedure SortTIA(var Arr: TIntArray); StdCall;
 begin
@@ -63,25 +82,28 @@ end;
 
 (*
  Sorting Array of Extended!
- It uses a combination of Insertion- And Quick-Sort.
 *)
 procedure __SortTEA(Arr:TExtArray; Left, Right:Integer);
 var
   i, j : Integer;
   pivot: Extended;
 begin
-  if Right <= Left+11 then
+  if Right < Left+15 then
   begin
-    for i := Left to Right do
-      for j := i downto 1 do begin
-        if not (Arr[j] < Arr[j - 1]) then Break;
-        ExchE(Arr[j - 1], Arr[j]);
+    for i := Left+1 to Right do begin
+      j := i-1;
+      pivot := arr[i];
+      while (j >= Left) and (arr[j] > pivot) do begin
+        Arr[j+1] := Arr[j];
+        j:=j-1;
       end;
+      arr[j+1] := pivot;
+    end;
     Exit;
   end;
   i:=Left;
   j:=Right;
-  pivot := Arr[(Left + Right) shr 1];
+  pivot := Arr[(left+right) shr 1];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
@@ -91,8 +113,8 @@ begin
       i:=i+1;
     end;
   until (i>j);
-  if Left<j then __SortTEA(Arr, Left,j);
-  if i<Right then __SortTEA(Arr, i,Right);
+  if (Left < j) then __SortTEA(Arr, Left,j);
+  if (i < Right) then __SortTEA(Arr, i,Right);
 end;
 
 procedure SortTEA(var Arr: TExtArray); StdCall;
@@ -102,15 +124,14 @@ end;
 
 
 (*
- Sorting Array of TPoint!
- It uses a combination of Insertion- And Quick-Sort.
+ Sorting Array of TPoint using an array for weight!
 *)
 procedure __SortTPA(Arr:TPointArray; Weight:TIntArray; Left, Right:Integer);
 var
   i, j : Integer;
   pivot: Integer;
 begin
-  if Right <= Left+11 then
+  if Right < Left+15 then
   begin
     for i := Left to Right do
       for j := i downto 1 do begin

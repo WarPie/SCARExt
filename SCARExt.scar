@@ -35,28 +35,61 @@ end;
 
 
 {*
- Get all pixels (2D-array) from an area defined by TBox..
+ Get all the pixels on the bitmap as a ATIA (ImgArray)..
 *}
-function XT_Bmp2Array(BMP: TSCARBitmap; DoFree:Boolean): T2DIntArray;
+function XT_Bmp2Array(bmp: TSCARBitmap; DoFree:Boolean): T2DIntArray;
 var TIA:TIntArray;
 begin
-  TIA := BMP.GetPixels(TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1)))
-  Result := XTCore_TIAToATIA(TIA, BMP.Width,  BMP.Height);
+  TIA := BMP.GetPixels(TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1))); 
+  Result := XT_TIAToATIA(TIA, BMP.Width,  BMP.Height);  
   if DoFree then BMP.Free;
 end;
 
-{function BMPSetData(bmp: TSCARBitmap; Matrix:T2DIntArray);
-var W,H,i:Integer;
+
+{*
+ Set all the pixels from an ATIA (ImgArray) to the bitmap..
+*}
+procedure XT_BmpSetData(var bmp: TSCARBitmap; Matrix:T2DIntArray; Adapt:Boolean);
+var 
+  W,H:Integer;
+  TPA:TPointArray;
 begin
   W := Length(Matrix[0]); 
   H := Length(Matrix);
-  bmp.SetSize(W,H);
-  for i:=0 to (H-1) do   
-  begin 
-    TPA := TPAFromBox(Box(0, y, W-1, y);
-    bmp.SetPixelsEx(TPA, XT_ATIAGetIndices(Matrix,TPA))
-  end;
-end;}
+  if Adapt then
+    if (W > bmp.Width) or (H > bmp.Height) then
+      bmp.SetSize(Max(W,bmp.Width),Max(H,bmp.Height));
+  TPA := TPAFromBox(Box(0, 0, W-1, H-1));
+  bmp.SetPixelsEx(TPA, XT_ATIAGetValues(Matrix, TPA));
+  SetLength(TPA, 0);
+end;
+
+
+{*
+ Set all the pixels from an ATIA (ImgArray) to the bitmap. 
+ If the Matrix contains AlphaColor then that pixel/index will not be changed in the bitmap..
+*}
+procedure XT_BmpSetDataEx(var bmp: TSCARBitmap; Matrix:T2DIntArray; Adapt:Boolean; AlphaColor:Integer);
+var 
+  W,H:Integer;
+  NewW, NewH:Integer; 
+  TPA:TPointArray;
+  Mat:T2DIntArray;
+begin
+  W := Length(Matrix[0]); 
+  H := Length(Matrix);
+  NewW := Max(W, bmp.Width);
+  NewH := Max(H, bmp.Height);
+  Mat := XT_Bmp2Array(bmp, False);
+  if Adapt then
+    if (NewW <> bmp.Width) or (NewH <> bmp.Height) then
+      bmp.SetSize(NewW,NewH);
+  TPA := TPAFromBox(Box(0, 0, W-1, H-1)); 
+  XT_ATIACombine(Matrix, Mat, AlphaColor); 
+  bmp.SetPixelsEx(TPA, XT_ATIAGetValues(Matrix, TPA));
+  SetLength(TPA, 0);
+  SetLength(Mat, 0);
+end;
 
 
 (*
@@ -89,4 +122,19 @@ begin
   if (XS=0) and (YS=0) then Exit;
   XT_MoveTPA(TPA,XS,YS);
   
+end;
+
+
+{*
+ .... Will probably be removed..
+*}
+function XT_BMPFindEdges(BMP:TSCARBitmap; MinDiff:Integer): TPointArray;
+var 
+  Img:T2DIntArray;
+  W,H:Integer;
+begin
+  XT_ClientSize(W,H);
+  Img := XT_Bmp2Array(XT_ScreenAreaBMP(0,0,W,H), True);
+  Result := XT_ImCEdges(Img, MinDiff);
+  SetLength(Img, 0);
 end;

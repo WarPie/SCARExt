@@ -22,7 +22,8 @@ function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean)
 //Other----------->
 procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
 function NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
-function ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
+procedure ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer); StdCall;
+function ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
 
 
@@ -269,10 +270,22 @@ begin
 end;
 
 
+procedure ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer); StdCall;
+var x,y,W,H:Integer;
+begin
+  W := Min(High(ATIA[0]), High(ATIA2[0])); 
+  H := Min(High(ATIA), High(ATIA2)); 
+  for y:=0 to H do
+    for x:=0 to W do
+      if (ATIA[y][x] = Value) then
+        ATIA[y][x] := ATIA2[y][x];
+end;
+
+
 {*
   Returns the values at each given point (TPA), in the ATIA.
 *}
-function ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
+function ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
 var
   i,W,H,c,L:Integer;
 begin

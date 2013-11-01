@@ -64,11 +64,11 @@ begin
   AddCommand(@Modulo,     'function XT_Modulo(X,Y:Extended): Extended;');
   AddCommand(@Modulo,     'function XT_Mod(X,Y:Extended): Extended;'); //Alias^
   AddCommand(@InCircle,   'function XT_InCircle(const Pt, Center: TPoint; Radius: Integer): Boolean;');
+  AddCommand(@InEllipse,  'function XT_InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean;');
+  AddCommand(@InRect,     'function XT_InRect(const Pt:TPoint; const A,B,C,D:TPoint): Boolean;');
   AddCommand(@InPoly,     'function XT_InPoly(x,y:Integer; const Poly:TPointArray): Boolean;');
-  AddCommand(@InPolyR,   'function XT_InPolyR(x,y:Integer; const Poly:TPointArray): Boolean;');
-  AddCommand(@InPolyW,   'function XT_InPolyW(x,y:Integer; const Poly:TPointArray): Boolean;');
-  AddCommand(@InEllipse,  'function XT_InEllipse(const Pt, Center:TPoint; YRad, XRad: Integer): Boolean;');
-  AddCommand(@InRectange, 'function XT_InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean;');
+  AddCommand(@InPolyR,    'function XT_InPolyR(x,y:Integer; const Poly:TPointArray): Boolean;');
+  AddCommand(@InPolyW,    'function XT_InPolyW(x,y:Integer; const Poly:TPointArray): Boolean;');
   AddCommand(@DeltaAngle, 'function XT_DeltaAngle(DegA,DegB:Extended): Extended;');
   
   
@@ -78,18 +78,18 @@ begin
   AddCommand(@SumTIA,    'function XT_SumTIA(const Arr: TIntArray): Integer;');
   AddCommand(@SumTEA,    'function XT_SumTEA(const Arr: TExtArray): Extended;');
   AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
-  AddCommand(@TIAToATIA, 'function XTCore_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
-  
-  
+  AddCommand(@TIAToATIA, 'function XT_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
+
+
   //** Sorting.pas **//
   AddCommand(@SortTIA, 'procedure XT_SortTIA(var Arr: TIntArray);');
   AddCommand(@SortTEA, 'procedure XT_SortTEA(var Arr: TExtArray);');
   AddCommand(@SortTPA, 'procedure XT_SortTPA(var Arr: TPointArray);');
-  AddCommand(@SortTPAFrom, 'procedure XT_SortTPAFrom(var Arr: TPointArray; const From:TPoint);');
+  AddCommand(@SortTPAFrom,     'procedure XT_SortTPAFrom(var Arr: TPointArray; const From:TPoint);');
   AddCommand(@SortTPAByRow,    'procedure XT_SortTPAByRow(var Arr: TPointArray);');
   AddCommand(@SortTPAByColumn, 'procedure XT_SortTPAByColumn(var Arr: TPointArray);');
-  
-  
+
+
   //** Finder.pas **//
   AddCommand(@FindColorTolExLCH, 'function XTCore_FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   AddCommand(@FindColorTolExLAB, 'function XTCore_FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
@@ -160,7 +160,8 @@ begin
   AddCommand(@TPAToBoolMatrixNil, 'function XT_TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DIntArray;');
   
   AddCommand(@NormalizeATIA,  'function XT_NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
-  AddCommand(@ATIAGetIndices, 'function XT_ATIAGetIndices(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
+  AddCommand(@ATIAGetValues,  'function XT_ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
+  AddCommand(@ATIACombine,    'procedure XT_ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer);');
   
   
   //** Imaging.pas **//

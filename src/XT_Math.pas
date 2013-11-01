@@ -18,13 +18,13 @@ function DistManhattan(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistEuclidean(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistChebyshev(const pt1,pt2: TPoint): Extended; Inline; StdCall;
 function DistOctagonal(const pt1,pt2: TPoint): Extended; Inline; StdCall;
-function InVector(p, q, r:TPoint):Boolean; Inline;
-function InCircle(const Pt, Center: TPoint; Radius: Integer): Boolean; Inline; StdCall;
+function InCircle(const  Pt,Center:TPoint; Radius: Integer): Boolean; Inline; StdCall;
+function InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean; Inline; StdCall;
+function InRect(const Pt:TPoint; const A,B,C,D:TPoint): Boolean; Inline; StdCall;
 function InPoly(x,y:Integer; const Poly:TPointArray): Boolean; Inline; StdCall;
 function InPolyR(x,y:Integer; const Poly:TPointArray): Boolean; Inline; StdCall;
 function InPolyW(x,y:Integer; const Poly:TPointArray): Boolean; Inline; StdCall;
-function InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean; Inline; StdCall;
-function InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean; Inline; StdCall;
+function InBox(const Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean; Inline;
 function IsPrime(n: Integer): Boolean; Inline;
 
 
@@ -114,27 +114,6 @@ end;
 {============================= SHAPE CALCULATIONS =============================}
 {==============================================================================}
 
-{*
- Check if a point `r` is within a vector line defined by p-q.
- Using CrossProduct to check if the points are aligned.
- Then we use DotProduct to see if it's on the vector.
-*}
-function InVector(p, q, r:TPoint):Boolean; Inline;
-var
-  DotProduct:Integer;
-  d: TPoint; //d for delta
-begin
-  Result := True;
-  d := Point((q.x - p.x), (q.y - p.y));
-  if (Abs((r.y - p.y) * d.x - (r.x-p.x) * d.y) <> 0) then 
-    Exit(False);
-  DotProduct := (r.x - p.x) * d.x + (r.y - p.y) * d.y;
-  if (DotProduct < 0) then 
-    Exit(False); 
-  if DotProduct > (Sqr(d.x) + Sqr(d.y)) then
-    Exit(False);
-end;
-
 
 {*
  Check if a point is within a circle.
@@ -143,6 +122,52 @@ function InCircle(const Pt, Center: TPoint; Radius: Integer): Boolean; Inline; S
 begin
   Result := Sqr(Pt.X - Center.X) + Sqr(Pt.Y - Center.Y) <= Sqr(Radius);
 end;
+
+  
+  
+{*
+ Check if a point is within a ellipse.
+*}
+function InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean; Inline; StdCall;
+var
+  X, Y: Integer;
+begin
+  X := Pt.X - Center.X;
+  Y := Pt.Y - Center.Y;
+  Result := (X*X*YRad*YRad)+(Y*Y*XRad*XRad) <= (YRad*YRad*XRad*XRad);
+end; 
+
+
+{*
+ Is the coordiants within a rectangle (defined by four points)?
+ > C is not actually used, but for future extension/changes, i'll leave it here.
+*}
+function InRect(const Pt:TPoint; const A,B,C,D:TPoint): Boolean; Inline; StdCall;
+var
+  Vec:TPoint; 
+  Dot:Extended;
+begin
+  Vec := Point(A.x-B.x, A.y-B.y);
+  Dot := ((A.x-Pt.x) * Vec.x) + ((A.y-Pt.y) * Vec.y);
+  if not((0 <= Dot) and (Dot <= (Sqr(Vec.x) + Sqr(Vec.y)))) then
+    Exit(False);
+  Vec := Point(A.x-D.x, A.y-D.y);
+  Dot := ((A.x-Pt.x) * Vec.x) + ((A.y-Pt.y) * Vec.y);  
+  if not((0 <= Dot) and (Dot <= (Sqr(Vec.x) + Sqr(Vec.y)))) then
+    Exit(False);
+  Result := True;
+end;
+
+
+{*
+ Is the coordiants within a box aligned with the axes?
+*}
+function InBox(const Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean; Inline;
+begin
+  Result:= (Pt.X >= X1) and (Pt.X <= X2) and
+           (Pt.Y >= Y1) and (Pt.Y <= Y2);
+end;
+
 
 {* 
  Check if a point is within a polygon/shape by the given outline points (poly)
@@ -211,8 +236,8 @@ begin
   H := High(poly);
   j := H;
   for i:=0 to H do begin
-    if ((Poly[i].x = x) and (Poly[i].y = y)) then
-      Exit(True);
+    //if ((Poly[i].x = x) and (Poly[i].y = y)) then
+    //  Exit(True);
     if (poly[i].y <= y) then begin
       if (poly[j].y > y) then
         if (((poly[j].x-poly[i].x)*(y-poly[i].y)-(x-poly[i].x)*(poly[j].y-poly[i].y)) > 0) then
@@ -225,29 +250,7 @@ begin
   end;
   Result := (wn <> 0);
 end;
-  
-  
-{*
- Check if a point is within a ellipse.
-*}
-function InEllipse(const Pt,Center:TPoint; YRad, XRad: Integer): Boolean; Inline; StdCall;
-var
-  X, Y: Integer;
-begin
-  X := Pt.X - Center.X;
-  Y := Pt.Y - Center.Y;
-  Result := (X*X*YRad*YRad)+(Y*Y*XRad*XRad) <= (YRad*YRad*XRad*XRad);
-end; 
 
-
-{*
- Is the coordiants within a rectangle?
-*}
-function InRectange(Pt:TPoint; X1,Y1, X2,Y2: Integer): Boolean; Inline; StdCall;
-begin
-  Result:= (Pt.X >= X1) and (Pt.X <= X2) and
-           (Pt.Y >= Y1) and (Pt.Y <= Y2);
-end;
 
 
 //============================================================================\\

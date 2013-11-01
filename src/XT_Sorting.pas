@@ -4,13 +4,33 @@ unit XT_Sorting;
  All rights reserved.
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
-(* Pretty fast sorting *)
+(*
+ My personal (fast) sorting algorithm implmentation (QuickInsertSort).
+ > The closer the array is to beeing already sorted, the faster it gets.
+ > Does not matter much if the array is reversed or not.
+ > If you ever see it go O(n^2) aka superslow, please report the bug.
+
+ How does it work?
+ First of all it uses a sliglty modified Quicksort as a base.
+ Quicksort has a strong property of weighting reversed sorted array equal to a already
+ sorted array. So no matter direction it uses the same about the same time.
+
+ If the partition Left to Right is less then a cirtain criteria InsertionSort is used.
+
+ If all items from "Left up to pivot" is sorted and "Right down to pivot" is sorted
+ then we run InsertionSort on the "partition", and exit. If not then we continue
+ doing a regular quicksort. This check is then continued ~6 times in each partioning.
+
+ My testes show that it can be ~35x faster then QuickSort.
+*)
 interface
 
 uses
   XT_Types, XT_Standard, XT_Points;
 
-procedure InsSort(Arr:TIntArray; Left, Right:Integer); Inline;
+procedure InsSortTIA(Arr:TIntArray; Left, Right:Integer); Inline;
+procedure InsSortTEA(Arr:TExtArray; Left, Right:Integer); Inline;
+procedure InsSortTPA(Arr:TPointArray; Weight:TIntArray; Left, Right:Integer); Inline;
 procedure SortTIA(var Arr: TIntArray); StdCall;
 procedure SortTEA(var Arr: TExtArray); StdCall;
 procedure SortTPA(var Arr: TPointArray); StdCall;
@@ -22,9 +42,9 @@ procedure SortTPAbyColumn(var Arr: TPointArray); StdCall;
 implementation
 
 (*
- Fast integer sorting from sall arrays, or small parts of arrays.
+ Fast integer sorting from small arrays, or small parts of arrays.
 *)
-procedure InsSort(Arr:TIntArray; Left, Right:Integer); Inline;
+procedure InsSortTIA(Arr:TIntArray; Left, Right:Integer); Inline;
 var i, j, tmp:Integer;
 begin
   for i := Left+1 to Right do begin
@@ -40,38 +60,86 @@ end;
 
 
 (*
+ Fast extended sorting from small arrays, or small parts of arrays.
+*)
+procedure InsSortTEA(Arr:TExtArray; Left, Right:Integer); Inline;
+var i, j:Integer; tmp:Extended;
+begin
+  for i := Left+1 to Right do begin
+    j := i-1;
+    Tmp := arr[i];
+    while (j >= Left) and (Arr[j] > Tmp) do begin
+      Arr[j+1] := Arr[j];
+      j:=j-1;
+    end;
+    Arr[j+1] := Tmp;
+  end;
+end;
+
+
+(*
+ Fast TPoint sorting from small arrays, or small parts of arrays.
+*)
+procedure InsSortTPA(Arr:TPointArray; Weight:TIntArray; Left, Right:Integer); Inline;
+var i, j:Integer;
+begin
+  for i := Left to Right do
+    for j := i downto Left + 1 do begin
+      if not (Weight[j] < Weight[j - 1]) then Break;
+      ExchPt(Arr[j-1], Arr[j]);
+      ExchI(Weight[j-1], Weight[j]);
+    end;
+end;
+
+
+
+//------------------------------------------------------------------------------
+//"Proper" sorting algorithms bellow.
+
+
+(*
  Sorting array of integers!
 *)
 procedure __SortTIA(Arr:TIntArray; Left, Right:Integer);
-var i,j,pivot: Integer;
+var
+  i,j,l,f: Integer;
+  pivot:Integer;
+  Ins:Boolean;
 begin
   if Right < Left+15 then
   begin
-    for i := Left+1 to Right do begin
-      j := i-1;
-      pivot := arr[i];
-      while (j >= Left) and (arr[j] > pivot) do begin
-        Arr[j+1] := Arr[j];
-        j:=j-1;
-      end;
-      arr[j+1] := pivot;
-    end;
+    InsSortTIA(Arr, Left, Right);
     Exit;
   end;
+  f:=0;
+  Ins:=False;
   i:=Left;
   j:=Right;
   pivot := Arr[(left+right) shr 1];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
+    if (Arr[j] = Arr[i])  and (f<=5) then begin
+      l := i;
+      while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
+      if (l=j) then begin
+        ins := True;
+        break;
+      end;
+    end;
     if i<=j then begin
       ExchI(Arr[i], Arr[j]);
       j:=j-1;
       i:=i+1;
+      f:=f+1;
     end;
   until (i>j);
-  if (Left < j) then __SortTIA(Arr, Left,j);
-  if (i < Right) then __SortTIA(Arr, i,Right);
+  if not(Ins) then
+  begin
+    if (Left < j) then __SortTIA(Arr, Left,j);
+    if (i < Right) then __SortTIA(Arr, i,Right);
+  end else
+    InsSortTIA(Arr, Left, Right);
 end; 
 
 procedure SortTIA(var Arr: TIntArray); StdCall;
@@ -85,36 +153,44 @@ end;
 *)
 procedure __SortTEA(Arr:TExtArray; Left, Right:Integer);
 var
-  i, j : Integer;
+  i,j,l,f: Integer;
   pivot: Extended;
+  Ins: Boolean;
 begin
   if Right < Left+15 then
   begin
-    for i := Left+1 to Right do begin
-      j := i-1;
-      pivot := arr[i];
-      while (j >= Left) and (arr[j] > pivot) do begin
-        Arr[j+1] := Arr[j];
-        j:=j-1;
-      end;
-      arr[j+1] := pivot;
-    end;
+    InsSortTEA(Arr, Left, Right);
     Exit;
   end;
+  f:=0;
+  Ins:=False;
   i:=Left;
   j:=Right;
   pivot := Arr[(left+right) shr 1];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
+    if (Arr[j] = Arr[i]) and (f<=5) then begin
+      l := i;
+      while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
+      if (l=j) then begin
+        ins := True;
+        break;
+      end;
+    end;
     if i<=j then begin
       ExchE(Arr[i], Arr[j]);
       j:=j-1;
       i:=i+1;
+      f:=f+1;
     end;
   until (i>j);
-  if (Left < j) then __SortTEA(Arr, Left,j);
-  if (i < Right) then __SortTEA(Arr, i,Right);
+  if not(Ins) then
+  begin
+    if (Left < j) then __SortTEA(Arr, Left,j);
+    if (i < Right) then __SortTEA(Arr, i,Right);
+  end else
+    InsSortTEA(Arr, Left, Right);
 end;
 
 procedure SortTEA(var Arr: TExtArray); StdCall;
@@ -128,34 +204,50 @@ end;
 *)
 procedure __SortTPA(Arr:TPointArray; Weight:TIntArray; Left, Right:Integer);
 var
-  i, j : Integer;
+  i,j,l,f: Integer;
   pivot: Integer;
+  Ins:Boolean;
 begin
   if Right < Left+15 then
   begin
     for i := Left to Right do
-      for j := i downto 1 do begin
+      for j := i downto Left + 1 do begin
         if not (Weight[j] < Weight[j - 1]) then Break;
         ExchPt(Arr[j-1], Arr[j]);
         ExchI(Weight[j-1], Weight[j]);
       end;
     Exit;
   end;
+  f:=0;
+  Ins:=False;
   i:=Left;
   j:=Right;
   pivot := Weight[(Left + Right) shr 1];
   repeat
     while pivot > Weight[i] do i:=i+1;
     while pivot < Weight[j] do j:=j-1;
+    if (Weight[j] = Weight[i]) and (f<=5) then begin
+      l := i;
+      while (Weight[l] = Weight[j]) and (l<j) do l:=l+1;
+      if (l=j) then begin
+        ins := True;
+        break;
+      end;
+    end;
     if i<=j then begin
       ExchPt(Arr[i], Arr[j]);
       ExchI(Weight[i], Weight[j]);
       j:=j-1;
       i:=i+1;
+      f:=f+1;
     end;
   until (i>j);
-  if Left<j then __SortTPA(Arr, Weight, Left,j);
-  if i<Right then __SortTPA(Arr, Weight, i,Right);
+  if not(Ins) then
+  begin
+    if Left<j then __SortTPA(Arr, Weight, Left,j);
+    if i<Right then __SortTPA(Arr, Weight, i,Right);
+  end else
+    InsSortTPA(Arr, Weight, Left, Right);
 end;
 
 //Sort TPA by Distance from 0,0;

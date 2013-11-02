@@ -11,20 +11,21 @@ unit XT_Sorting;
  > Fallback to ShellSort: Ensure O(n^3/2).
 
  How does it work?
- First of all it uses a sliglty modified Quicksort as a base.
- Quicksort has a strong property of weighting reversed sorted array equal to a already
- sorted array. So no matter direction it uses about the same time to sort.
+ First of all it uses a sligtly modified Quicksort as a base.
+ Quicksort has a strong property of weighting reversed sorted array close to equal to
+ already sorted array. So no matter direction it uses about the same time to sort.
 
  If the partition Left to Right is less then a cirtain criteria InsertionSort is used.
 
- If all items from "Left up to pivot" is sorted and "Right down to pivot" is sorted
+ If all items from "Left up to pivot" and "Right down to pivot" is (close to) sorted
  then we run InsertionSort on the "partition", and exit. If not then we continue
  doing a regular quicksort. This check is then continued ~6 times in each partioning.
  
  If the recursion depth goes bellow a given limit then we fall back to ShellSort to avoid
  worst-case scenario in Quicksort: O(n^2).
  
- My testes show that it can be ~35x faster then QuickSort.
+ My testes show that it can be ~35x faster then QuickSort.. 
+ >> (Much more whenever quicksort goes O(n^2) which is not normal).
 *)
 interface
 

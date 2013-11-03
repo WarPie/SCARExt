@@ -5,7 +5,7 @@ unit XT_Sorting;
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 (*
- My own (fast) sorting algorithm implmentation (QuickInsertSortW\Fallback2Shell). *funny*
+ My own (fast) sorting algorithm (FastSort) based on Quicksort, and InsertionSort.
  > The closer the array is to beeing already sorted, the faster it gets.
  > Does not matter much if the array is reversed or not.
  > Fallback to ShellSort to avoid worst-case scenario.
@@ -220,55 +220,47 @@ end;
 (*
  Sorting array of integers!
 *)
-procedure __SortTIA(var Arr:TIntArray; Left, Right, Depth:Integer);
+procedure __SortTIA(var Arr:TIntArray; Left, Right, depth:Integer);
 var
-  i,j,l,f,mid: Integer;
-  pivot:Integer;
-  Ins:Boolean;
+  mid,i,j,l,f,pivot:Integer;
 begin
-  if Right < Left+15 then
+  if (Left + 15 <= Right) then
   begin
-    InsSortTIA(Arr, Left, Right);
-    Exit;
-  end;
-  f:=0;
-  Ins:=False;
-  i:=Left;
-  j:=Right;
-  Mid := Left + (Right-Left) shr 1;
-  TIAMedian3(Arr, Left, Mid, Right);
-  TIAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
-  pivot := Arr[Mid];
-  repeat
-    while pivot > Arr[i] do i:=i+1;
-    while pivot < Arr[j] do j:=j-1;
-    if (Arr[j] = Arr[i])  and (f<=5) then begin
-      l := i;
-      while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
-      if (l=j) then begin
-        ins := True;
-        break;
-      end;
-    end;
-    if i<=j then begin
+    Mid := Left + (Right-Left) shr 1;
+    TIAMedian3(Arr, Left, Mid, Right);
+    TIAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+    Pivot := Arr[Mid];
+    f := 0;
+    i := Left;
+    j := Right;
+    l := i;
+	  repeat
+	    while (Arr[i] < pivot) do Inc(i);
+	    while (pivot < Arr[j]) do Dec(j);
+      if (f <= 5) then
+        if (Arr[j] = Arr[i]) then begin
+          l := i;
+          while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
+          if (l = j) then Break;
+        end;
+      if (i >= j) then Break;
       ExchI(Arr[i], Arr[j]);
-      j:=j-1;
-      i:=i+1;
-      f:=f+1;
-    end;
-  until (i>j);
-  if not(Ins) then
-  begin
-    Dec(depth);
-    if depth<=0 then begin
-      ShellSortTIA(Arr);
-      Exit;
-    end;
-    if (Left < j) then __SortTIA(Arr, Left,j, depth);
-    if (i < Right) then __SortTIA(Arr, i,Right, depth);
-  end else
-    InsSortTIA(Arr, Left, Right);
-end; 
+      Inc(f);
+      Inc(i);
+      Dec(j);
+    until False;
+
+    if (l<>j) then begin
+      Dec(depth);
+      if (depth <= 0) then begin
+        ShellSortTIA(Arr);
+        Exit;
+      end;
+      if (Left < j) then __SortTIA(Arr, Left, j, depth);
+      if (i < Right) then __SortTIA(Arr, i, Right, depth);
+    end else InsSortTIA(Arr, Left, Right);
+  end else InsSortTIA(Arr, Left, Right);
+end;
 
 procedure SortTIA(var Arr: TIntArray); StdCall;
 var limit: Integer;
@@ -278,58 +270,53 @@ begin
 end;
 
 
+
 (*
  Sorting Array of Extended!
 *)
-procedure __SortTEA(var Arr:TExtArray; Left, Right, Depth:Integer);
+procedure __SortTEA(var Arr:TExtArray; Left, Right, depth:Integer);
 var
   i,j,l,f,mid: Integer;
   pivot: Extended;
-  Ins: Boolean;
 begin
-  if Right < Left+15 then
+  if (Left + 15 <= Right) then
   begin
-    InsSortTEA(Arr, Left, Right);
-    Exit;
-  end;
-  f:=0;
-  Ins:=False;
-  i:=Left;
-  j:=Right;
-  Mid := Left + (Right-Left) shr 1;
-  TEAMedian3(Arr, Left, Mid, Right);
-  TEAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
-  pivot := Arr[Mid];
-  repeat
-    while pivot > Arr[i] do i:=i+1;
-    while pivot < Arr[j] do j:=j-1;
-    if (Arr[j] = Arr[i]) and (f<=5) then begin
-      l := i;
-      while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
-      if (l=j) then begin
-        ins := True;
-        break;
-      end;
-    end;
-    if i<=j then begin
+    Mid := Left + (Right-Left) shr 1;
+    TEAMedian3(Arr, Left, Mid, Right);
+    TEAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+    Pivot := Arr[Mid];
+    f := 0;
+    i := Left;
+    j := Right;
+    l := i;
+	  repeat
+	    while (Arr[i] < pivot) do Inc(i);
+	    while (pivot < Arr[j]) do Dec(j);
+      if (f <= 5) then
+        if (Arr[j] = Arr[i]) then begin
+          l := i;
+          while (Arr[l] = Arr[j]) and (l<j) do l:=l+1;
+          if (l = j) then Break;
+        end;
+      if (i >= j) then Break;
       ExchE(Arr[i], Arr[j]);
-      j:=j-1;
-      i:=i+1;
-      f:=f+1;
-    end;
-  until (i>j);
-  if not(Ins) then
-  begin
-    Dec(depth);
-    if depth<=0 then begin
-      ShellSortTEA(Arr);
-      Exit;
-    end;
-    if (Left < j) then __SortTEA(Arr, Left,j, Depth);
-    if (i < Right) then __SortTEA(Arr, i,Right, Depth);
-  end else
-    InsSortTEA(Arr, Left, Right);
+      Inc(f);
+      Inc(i);
+      Dec(j);
+    until False;
+
+    if (l<>j) then begin
+      Dec(depth);
+      if (depth <= 0) then begin
+        ShellSortTEA(Arr);
+        Exit;
+      end;
+      if (Left < j) then __SortTEA(Arr, Left, j, depth);
+      if (i < Right) then __SortTEA(Arr, i, Right, depth);
+    end else InsSortTEA(Arr, Left, Right);
+  end else InsSortTEA(Arr, Left, Right);
 end;
+
 
 procedure SortTEA(var Arr: TExtArray); StdCall;
 var limit: Integer;
@@ -339,64 +326,55 @@ begin
 end;
 
 
+
 (*
  Sorting Array of TPoint using an array for weight!
 *)
-procedure __SortTPA(var Arr:TPointArray; Weight:TIntArray; Left, Right, Depth:Integer);
+procedure __SortTPA(var Arr:TPointArray; var Weight:TIntArray; Left, Right, Depth:Integer);
 var
-  i,j,l,f,Mid: Integer;
-  pivot: Integer;
-  Ins:Boolean;
+  i,j,l,f,mid: Integer;
+  pivot: Extended;
 begin
-  if Right < Left+15 then
+  if (Left + 15 <= Right) then
   begin
-    for i := Left to Right do
-      for j := i downto Left + 1 do begin
-        if not (Weight[j] < Weight[j - 1]) then Break;
-        ExchPt(Arr[j-1], Arr[j]);
-        ExchI(Weight[j-1], Weight[j]);
-      end;
-    Exit;
-  end;
-  f:=0;
-  Ins:=False;
-  i:=Left;
-  j:=Right;
-  Mid := Left + (Right-Left) shr 1;
-  TPAMedian3(Arr, Weight, Left, Mid, Right);
-  TPAMedian3(Arr, Weight, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
-  Pivot := Weight[Mid];
-  repeat
-    while pivot > Weight[i] do i:=i+1;
-    while pivot < Weight[j] do j:=j-1;
-    if (Weight[j] = Weight[i]) and (f<=5) then begin
-      l := i;
-      while (Weight[l] = Weight[j]) and (l<j) do l:=l+1;
-      if (l=j) then begin
-        ins := True;
-        break;
-      end;
-    end;
-    if i<=j then begin
+    Mid := Left + (Right-Left) shr 1;
+    TPAMedian3(Arr, Weight, Left, Mid, Right);
+    TPAMedian3(Arr, Weight, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+    Pivot := Weight[Mid];
+    f := 0;
+    i := Left;
+    j := Right;
+    l := i;
+	  repeat
+	    while (Weight[i] < pivot) do Inc(i);
+	    while (pivot < Weight[j]) do Dec(j);
+      if (f <= 5) then
+        if (Weight[j] = Weight[i]) then begin
+          l := i;
+          while (Weight[l] = Weight[j]) and (l<j) do l:=l+1;
+          if (l = j) then Break;
+        end;
+      if (i >= j) then Break;
       ExchPt(Arr[i], Arr[j]);
       ExchI(Weight[i], Weight[j]);
-      j:=j-1;
-      i:=i+1;
-      f:=f+1;
-    end;
-  until (i>j);
-  if not(Ins) then
-  begin
-    Dec(depth);
-    if depth<=0 then begin
-      ShellSortTPA(Arr, Weight);
-      Exit;
-    end;
-    if Left<j then __SortTPA(Arr, Weight, Left,j, Depth);
-    if i<Right then __SortTPA(Arr, Weight, i,Right, Depth);
-  end else
-    InsSortTPA(Arr, Weight, Left, Right);
+      Inc(f);
+      Inc(i);
+      Dec(j);
+    until False;
+
+    if (l<>j) then begin
+      Dec(depth);
+      if (depth <= 0) then begin
+        ShellSortTPA(Arr, Weight);
+        Exit;
+      end;
+      if (Left < j) then __SortTPA(Arr, Weight, Left, j, depth);
+      if (i < Right) then __SortTPA(Arr, Weight, i, Right, depth);
+    end else InsSortTPA(Arr, Weight, Left, Right);
+  end else InsSortTPA(Arr, Weight, Left, Right);
 end;
+
+
 
 //Sort TPA by Distance from 0,0;
 procedure SortTPA(var Arr: TPointArray); StdCall;
@@ -414,6 +392,7 @@ begin
   SetLength(Weight, 0);
 end;
 
+
 //Sort TPA by Distance from a TPoint `From`.
 procedure SortTPAFrom(var Arr: TPointArray; const From:TPoint); StdCall;
 var
@@ -429,6 +408,7 @@ begin
   __SortTPA(Arr, Weight, Low(Arr), High(Arr), Limit);
   SetLength(Weight, 0);
 end;
+
 
 //Sort TPA by Row.
 procedure SortTPAbyRow(var Arr: TPointArray); StdCall;
@@ -448,6 +428,7 @@ begin
   __SortTPA(Arr, Weight, Low(Arr), High(Arr), Limit);
   SetLength(Weight, 0);
 end;
+
 
 //Sort TPA by Column.
 procedure SortTPAbyColumn(var Arr: TPointArray); StdCall;

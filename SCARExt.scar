@@ -16,6 +16,21 @@ type
   XT_MatchAlgo = (LAB, LCH);
 
 
+{* 
+  Convert ATIA to STR (for debugging)...
+*}
+function ATIAToStr(ATIA: T2DIntArray): String;
+var
+  i: Integer;
+begin
+  Result := '[';
+  for i:=0 to High(ATIA) do begin
+    Result := Result + '('+ TIAToStr(ATIA[i]) + ')';
+    if i < High(ATIA) then Result := Result + ', ';
+  end;
+  Result := Result + ']'
+end;  
+  
 {*
  Copy the client area as bitmap from X->Y2
 *}

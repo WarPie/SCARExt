@@ -73,10 +73,12 @@ begin
   
   
   //** Numeric.pas **//
-  AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
-  AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
   AddCommand(@SumTIA,    'function XT_SumTIA(const Arr: TIntArray): Integer;');
   AddCommand(@SumTEA,    'function XT_SumTEA(const Arr: TExtArray): Extended;');
+  AddCommand(@TIACombinations, 'function XT_TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray;');
+  AddCommand(@TEACombinations, 'function XT_TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray;');
+  AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
+  AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
   AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
   AddCommand(@TIAToATIA, 'function XT_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
 

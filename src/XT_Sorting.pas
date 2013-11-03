@@ -234,9 +234,9 @@ begin
     i := Left;
     j := Right;
     l := i;
-	  repeat
-	    while (Arr[i] < pivot) do Inc(i);
-	    while (pivot < Arr[j]) do Dec(j);
+    repeat
+      while (Arr[i] < pivot) do Inc(i);
+      while (pivot < Arr[j]) do Dec(j);
       if (f <= 5) then
         if (Arr[j] = Arr[i]) then begin
           l := i;
@@ -289,9 +289,9 @@ begin
     i := Left;
     j := Right;
     l := i;
-	  repeat
-	    while (Arr[i] < pivot) do Inc(i);
-	    while (pivot < Arr[j]) do Dec(j);
+    repeat
+      while (Arr[i] < pivot) do Inc(i);
+      while (pivot < Arr[j]) do Dec(j);
       if (f <= 5) then
         if (Arr[j] = Arr[i]) then begin
           l := i;
@@ -345,9 +345,9 @@ begin
     i := Left;
     j := Right;
     l := i;
-	  repeat
-	    while (Weight[i] < pivot) do Inc(i);
-	    while (pivot < Weight[j]) do Dec(j);
+    repeat
+      while (Weight[i] < pivot) do Inc(i);
+      while (pivot < Weight[j]) do Dec(j);
       if (f <= 5) then
         if (Weight[j] = Weight[i]) then begin
           l := i;

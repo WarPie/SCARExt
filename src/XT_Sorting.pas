@@ -8,24 +8,26 @@ unit XT_Sorting;
  My own (fast) sorting algorithm implmentation (QuickInsertSortW\Fallback2Shell). *funny*
  > The closer the array is to beeing already sorted, the faster it gets.
  > Does not matter much if the array is reversed or not.
- > Fallback to ShellSort: Ensure O(n^3/2).
+ > Fallback to ShellSort to avoid worst-case scenario.
 
  How does it work?
- First of all it uses a sligtly modified Quicksort as a base.
- Quicksort has a strong property of weighting reversed sorted array close to equal to
- already sorted array. So no matter direction it uses about the same time to sort.
+ 1. Based on a sligtly modified Quicksort.
+ 2. Recursively partitions the array at the middle (See step 4)...
+ 3. If the partition Left to Right is less then a cirtain criteria InsertionSort is used.
+ 
+ .If not insertion:
+ 4. Pivot is selected as a Median of 5: Left - MidLeft - Mid - MidRight - Right.
 
- If the partition Left to Right is less then a cirtain criteria InsertionSort is used.
-
- If all items from "Left up to pivot" and "Right down to pivot" is (close to) sorted
+ 5. If all items from "Left up to pivot" and "Right down to pivot" is (close to) sorted
  then we run InsertionSort on the "partition", and exit. If not then we continue
  doing a regular quicksort. This check is then continued ~6 times in each partioning.
  
- If the recursion depth goes bellow a given limit then we fall back to ShellSort to avoid
+ 6. If the recursion depth goes bellow a given limit then we fall back to ShellSort to avoid
  worst-case scenario in Quicksort: O(n^2).
  
- My testes show that it can be ~35x faster then QuickSort.. 
- >> (Much more whenever quicksort goes O(n^2) which is not normal).
+ -------
+ My testes show that it can be ~30x faster then QuickSort (Was faster, but I had to slow it down to avoid bad cases)..
+ >> (Much more whenever quicksort goes O(n^2) - Rare/Depending on pivot selection).
 *)
 interface
 
@@ -48,6 +50,41 @@ procedure SortTPAbyColumn(var Arr: TPointArray); StdCall;
 
 //-----------------------------------------------------------------------
 implementation
+
+
+//Median of three - Integer.
+procedure TIAMedian3(var Arr:TIntArray; Left, Middle, Right:Integer); Inline;
+begin
+  if (Arr[Middle] < Arr[Left])  then ExchI(Arr[Left], Arr[Middle]);
+  if (Arr[Right] < Arr[Left])   then ExchI(Arr[Left], Arr[Right]);
+  if (Arr[Right] < Arr[Middle]) then ExchI(Arr[Middle], Arr[Right]);
+end;
+
+//Median of three - Extended.
+procedure TEAMedian3(var Arr:TExtArray; Left, Middle, Right:Integer); Inline;
+begin
+  if (Arr[Middle] < Arr[Left])  then ExchE(Arr[Left], Arr[Middle]);
+  if (Arr[Right] < Arr[Left])   then ExchE(Arr[Left], Arr[Right]);
+  if (Arr[Right] < Arr[Middle]) then ExchE(Arr[Middle], Arr[Right]);
+end;
+
+
+//Median of three - TPoint with weight.
+procedure TPAMedian3(var Arr:TPointArray; var Weight:TIntArray; Left, Middle, Right:Integer); Inline;
+begin
+  if (Weight[Middle] < Weight[Left]) then begin
+    ExchPt(Arr[Left], Arr[Middle]);
+    ExchI(Weight[Left], Weight[Middle]);
+  end;
+  if (Weight[Right] < Weight[Left]) then begin
+    ExchPt(Arr[Left], Arr[Right]);
+    ExchI(Weight[Left], Weight[Right]);
+  end;
+  if (Weight[Right] < Weight[Middle]) then begin
+    ExchPt(Arr[Middle], Arr[Right]);
+    ExchI(Weight[Middle], Weight[Right]);
+  end;
+end;
 
 
 //------------------------------------------------------------------------------
@@ -107,7 +144,8 @@ end;
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-//ShellSort bellow (only used to ensure O(n^3/2)) in the "main" sorting algorithm.
+// ShellSort bellow (only used to ensure O(n^1.5)) in the "main" sorting algorithm.
+// Using predifined gaps (Ciura's) only resulted in slowdown.
 
 procedure ShellSortTIA(var Arr: TIntArray);
 var
@@ -184,7 +222,7 @@ end;
 *)
 procedure __SortTIA(var Arr:TIntArray; Left, Right, Depth:Integer);
 var
-  i,j,l,f: Integer;
+  i,j,l,f,mid: Integer;
   pivot:Integer;
   Ins:Boolean;
 begin
@@ -193,15 +231,14 @@ begin
     InsSortTIA(Arr, Left, Right);
     Exit;
   end;
-  if Depth < 0 then begin
-    ShellSortTIA(Arr);
-    Exit;
-  end;
   f:=0;
   Ins:=False;
   i:=Left;
   j:=Right;
-  pivot := Arr[(left+right) shr 1];
+  Mid := Left + (Right-Left) shr 1;
+  TIAMedian3(Arr, Left, Mid, Right);
+  TIAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+  pivot := Arr[Mid];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
@@ -222,8 +259,13 @@ begin
   until (i>j);
   if not(Ins) then
   begin
-    if (Left < j) then __SortTIA(Arr, Left,j, depth-1);
-    if (i < Right) then __SortTIA(Arr, i,Right, depth-1);
+    Dec(depth);
+    if depth<=0 then begin
+      ShellSortTIA(Arr);
+      Exit;
+    end;
+    if (Left < j) then __SortTIA(Arr, Left,j, depth);
+    if (i < Right) then __SortTIA(Arr, i,Right, depth);
   end else
     InsSortTIA(Arr, Left, Right);
 end; 
@@ -241,7 +283,7 @@ end;
 *)
 procedure __SortTEA(var Arr:TExtArray; Left, Right, Depth:Integer);
 var
-  i,j,l,f: Integer;
+  i,j,l,f,mid: Integer;
   pivot: Extended;
   Ins: Boolean;
 begin
@@ -250,15 +292,14 @@ begin
     InsSortTEA(Arr, Left, Right);
     Exit;
   end;
-  if Depth < 0 then begin
-    ShellSortTEA(Arr);
-    Exit;
-  end;
   f:=0;
   Ins:=False;
   i:=Left;
   j:=Right;
-  pivot := Arr[(left+right) shr 1];
+  Mid := Left + (Right-Left) shr 1;
+  TEAMedian3(Arr, Left, Mid, Right);
+  TEAMedian3(Arr, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+  pivot := Arr[Mid];
   repeat
     while pivot > Arr[i] do i:=i+1;
     while pivot < Arr[j] do j:=j-1;
@@ -279,8 +320,13 @@ begin
   until (i>j);
   if not(Ins) then
   begin
-    if (Left < j) then __SortTEA(Arr, Left,j, Depth-1);
-    if (i < Right) then __SortTEA(Arr, i,Right, Depth-1);
+    Dec(depth);
+    if depth<=0 then begin
+      ShellSortTEA(Arr);
+      Exit;
+    end;
+    if (Left < j) then __SortTEA(Arr, Left,j, Depth);
+    if (i < Right) then __SortTEA(Arr, i,Right, Depth);
   end else
     InsSortTEA(Arr, Left, Right);
 end;
@@ -298,7 +344,7 @@ end;
 *)
 procedure __SortTPA(var Arr:TPointArray; Weight:TIntArray; Left, Right, Depth:Integer);
 var
-  i,j,l,f: Integer;
+  i,j,l,f,Mid: Integer;
   pivot: Integer;
   Ins:Boolean;
 begin
@@ -312,15 +358,14 @@ begin
       end;
     Exit;
   end;
-  if Depth < 0 then begin
-    ShellSortTPA(Arr, Weight);
-    Exit;
-  end;
   f:=0;
   Ins:=False;
   i:=Left;
   j:=Right;
-  pivot := Weight[(Left + Right) shr 1];
+  Mid := Left + (Right-Left) shr 1;
+  TPAMedian3(Arr, Weight, Left, Mid, Right);
+  TPAMedian3(Arr, Weight, (Left+(Mid-Left) shr 1), Mid, (Mid+(Right-Mid) shr 1));
+  Pivot := Weight[Mid];
   repeat
     while pivot > Weight[i] do i:=i+1;
     while pivot < Weight[j] do j:=j-1;
@@ -342,8 +387,13 @@ begin
   until (i>j);
   if not(Ins) then
   begin
-    if Left<j then __SortTPA(Arr, Weight, Left,j, Depth-1);
-    if i<Right then __SortTPA(Arr, Weight, i,Right, Depth-1);
+    Dec(depth);
+    if depth<=0 then begin
+      ShellSortTPA(Arr, Weight);
+      Exit;
+    end;
+    if Left<j then __SortTPA(Arr, Weight, Left,j, Depth);
+    if i<Right then __SortTPA(Arr, Weight, i,Right, Depth);
   end else
     InsSortTPA(Arr, Weight, Left, Right);
 end;

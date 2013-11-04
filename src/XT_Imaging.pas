@@ -10,9 +10,9 @@ uses
 
 function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
-function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray; StdCall;
-function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray; StdCall;
-function ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray; StdCall;
+function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DIntArray; StdCall;
+function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
+function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
 function ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall;  
 
 //--------------------------------------------------
@@ -133,7 +133,7 @@ end;
     Alpha: Minvalue for result
     Beta: Maxvalue for result
 *}
-function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta: Byte): T2DByteArray; StdCall;
+function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta: Byte): T2DIntArray; StdCall;
 var
   W,H,x,y,i:Integer;
   Tab: Array [0..256] of Byte;
@@ -169,7 +169,7 @@ end;
     Method: TM_Mean or TM_MinMax
     C: Substract or add to the mean.
 *}
-function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray; StdCall;
+function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
 var
   W,H,x,y,i:Integer;
   Color,IMin,IMax: Byte;
@@ -244,7 +244,7 @@ end;
   ImgArr is treated as a binary array, so 0s will be left alone, and anything above 0 will be checked.
   You can use this with XT_Threshold or XT_ThresholdApdative.
 }
-function ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray; StdCall;
+function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
 var
   W,H,j,i,x,y:Integer;
   TPA:TPointArray;

@@ -169,9 +169,9 @@ begin
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
   AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');
-  AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DByteArray;');
-  AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DByteArray;');
-  AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DByteArray; Outlines:Boolean): T2DPointArray;');
+  AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DIntArray;');
+  AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray;');
+  AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray;');
   AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
   
   

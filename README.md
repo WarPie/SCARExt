@@ -5,7 +5,7 @@ Small library extension for SCAR-Divi.. Contains some "usefull" functions.
 
 Precompiled version
 --------
-http://www.speedyshare.com/uVSsp/SCARExt.rar (Dated: 03.Nov.2013) 
+http://speedy.sh/TNA8R/SCARExt.rar (Dated: 04.Nov.2013) 
 
 
 Installation 

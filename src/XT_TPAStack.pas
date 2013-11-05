@@ -100,7 +100,25 @@ type
     *)
     procedure Remove(const Item: TPoint); Inline;
 
+    (*
+     Remove the given index from the array.
+    *)
+    procedure Delete(const Index: Integer); Inline;
+    
+    
+    (*
+     Remove the given indices from the array.
+    *)
+    procedure DeleteEx(const Indices: TIntArray); Inline;
+    
+    
+    (*
+     Remove the first item from the stack whose value is `Value`.
+    *)
+    procedure Move(MoveX, MoveY:Integer); Inline;
 
+    
+    
     (*
      Get the value of the given Index.
     *)
@@ -138,7 +156,7 @@ type
 
     (*
      It sets the overhead length down to the highest index + 1.
-     Mainly used in combination with `GetData` to down size the array to the "correct size".
+     Mainly used in combination with `GetData` to decrese the array size to the "correct size".
     *)
     procedure Fit; Inline;
   end;
@@ -320,6 +338,71 @@ begin
   begin
     Dec(_High);
     CheckResizeLow(_High);
+  end;
+end;
+
+
+procedure TPAStack.Delete(const Index: Integer);
+var
+ i,j:Integer;
+begin
+  if (_High = -1) then Exit;
+  if (Index > _High) or (Index < 0) then Exit;
+  j := 0;
+  
+  for i:=Index to _High do
+  begin
+    if (i=Index) then
+    begin
+      j := i;
+    end else
+    begin
+      _Arr[j] := _Arr[i];
+      Inc(j);
+    end;
+  end; 
+
+  Dec(_High);
+  CheckResizeLow(_High);
+end;
+
+
+procedure TPAStack.DeleteEx(const Indices: TIntArray);
+var
+ i,j,lo:Integer;
+ Del:TBoolArray;
+begin
+  if (_High = -1) then Exit;
+  Lo := _High;
+  SetLength(Del, _High+1);
+  for i := 0 to High(Indices) do
+    if ((Indices[i] > -1) and (Indices[i] <= _High)) then
+    begin
+      Del[Indices[i]] := True;
+      if (Indices[i] < Lo) then Lo := Indices[i];
+    end;
+
+  j := 0;
+  for i:=Lo to _high do
+    if not(Del[i]) then
+    begin
+      _Arr[j] := _Arr[i];
+      Inc(j);
+    end;
+
+  _High := _High - (High(Indices)-j);
+  SetLength(Del, 0);
+  CheckResizeLow(_High);
+end;
+
+
+procedure TPAStack.Move(MoveX, MoveY:Integer);
+var i: Integer;
+begin
+  if (_High = -1) then Exit;
+  for i:=0 to _High do begin
+    _Arr[i].x := _Arr[i].x + MoveX;
+    _Arr[i].y := _Arr[i].y + MoveY;
   end;
 end;
 

@@ -37,7 +37,6 @@ begin
   H := High(ImgArr);
   SetLength(Result, H+1,W+1);
   mid := Block div 2;
-
   
   for y:=0 to H do
   begin

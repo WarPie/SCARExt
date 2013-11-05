@@ -9,9 +9,9 @@ uses
   XT_Types, Math, SysUtils;
 
 
-
-function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
-function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; StdCall;
+function ImFindColorTolEx(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, Tol:Integer): Boolean; StdCall;
+function ImFindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
+function ImFindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
 
 
 //--------------------------------------------------
@@ -20,9 +20,45 @@ implementation
 uses
   XT_HashTable, XT_ColorMath, XT_Math;
 
+  
+// Find multiple matches of specified color.
+function ImFindColorTolEx(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, Tol:Integer): Boolean; StdCall;
+var
+  W,H,X,Y,S,step:Integer;
+  R,G,B,R1,G1,B1:Byte;
+begin
+  Result := True;
+  W := High(ImgArr[0]);
+  H := High(ImgArr);
+  Step := W * 2;
+  SetLength(TPA, step);
+  ColorToRGB(Color, R,G,B);
+  Tol := Sqr(Tol) * 3;
+  S := 0;
+  for X:=0 to W do
+    for Y:=0 to H do
+    begin
+      ColorToRGB(ImgArr[Y][X], R1,G1,B1);
+      if ((Sqr(R1 - R) + Sqr(G1 - G) + Sqr(B1 - B)) <= Tol) then //(255 = tolmax)
+      begin
+        if (S >= Step) then
+        begin
+          Step := Step+Step;  //Very low amount of setlengths..
+          SetLength(TPA, Step);
+        end;
+        TPA[S].X := X;
+        TPA[S].Y := Y;
+        Inc(S);
+      end;
+    end;
+
+  SetLength(TPA,S);
+  if Length(TPA)=0 then Result := False;
+end;
+
 
 // Find multiple matches of specified color.
-function FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
+function ImFindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean; StdCall;
 var
   W,H,X,Y,S,step:Integer;
   L,C,HH, C1,H1, DeltaHue,FF,EE,DD:Single;
@@ -68,7 +104,7 @@ begin
         begin
           if S>=step then
           begin
-            step := step+step;  //for regualar widescreen this maxes at 10 SetLengths.
+            step := step+step;
             SetLength(TPA, step);
           end;
           TPA[S].X := X;
@@ -85,7 +121,7 @@ end;
 
 
 // Find multiple matches of specified color.
-function FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; StdCall;
+function ImFindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol,LightTol:Integer): Boolean; StdCall;
 var
   W,H,X,Y,S,step:Integer;
   L,A,B,FF,EE,DD:Single;

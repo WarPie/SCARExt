@@ -7,12 +7,12 @@ Unit XT_Points;
 interface
 
 uses
-  XT_Types, XT_Math, Math, SysUtils;
+  XT_Types, XT_Math, Math;
   
 function SamePoints(P1, P2:TPoint):Boolean; Inline;
 procedure GetAdjacent(var adj:TPointArray; n:TPoint; EightWay:Boolean); Inline; StdCall;
 procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPoint); Inline;
-function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
+function ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline; StdCall;
 function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
 procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
 function TPAMax(const TPA: TPointArray): TPoint;
@@ -39,7 +39,6 @@ function XagonPoints(const Center:TPoint; Sides:Integer; const Dir:TPoint): TPoi
 procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); Inline; StdCall;
 procedure TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer); Inline; StdCall;
 procedure TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint); inline; StdCall;
-function __VectorTurn(const p, q, r: TPoint): Boolean; Inline; StdCall;
 function ConvexHull(const TPA:TPointArray): TPointArray; StdCall;
 function FloodFillTPAEx(const TPA:TPointArray; const Start:TPoint; EightWay, KeepEdges:Boolean): TPointArray; StdCall;
 function FloodFillTPA(const TPA:TPointArray; const Start:TPoint; EightWay:Boolean): TPointArray; StdCall;
@@ -48,15 +47,13 @@ function TPABorder(const TPA:TPointArray): TPointArray; StdCall;
 function FloodFillPolygon(const Poly:TPointArray; EightWay:Boolean): TPointArray; StdCall;
 function ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray; StdCall;
 function ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean): T2DPointArray; StdCall;
-function __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9:Integer): Integer; Inline;
-function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; StdCall;
 
 
 //--------------------------------------------------
 implementation
 
 uses 
-  XT_CSpline, XT_Collection, XT_Sorting;
+  XT_CSpline, XT_Collection, XT_Sorting, XT_TPAStack;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -110,7 +107,7 @@ end;
  Return the outer point at the angle of the vector "Center->Pt". 
  The outer point is defined as Center + Radius, and the angle of "Center->Pt".
 *}
-function MovePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline;
+function ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline; StdCall;
 var
   dx,dy: Integer;
   Angle: Single;
@@ -455,6 +452,7 @@ begin
     TPA[i] := tmp;
   end;
 end;
+
 
 {*
  Moves the TPA by SX, and SY points.
@@ -857,8 +855,8 @@ procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Intege
 var
   RadXSQ,RadYSQ,TwoSQX,TwoSQY,p,x,y,px,py,H:Integer;
 begin
-  RadXSQ := RadX * RadX;
-  RadYSQ := RadY * RadY;
+  RadXSQ := Sqr(RadX);
+  RadYSQ := Sqr(RadY);
   twoSQX := 2 * RadXSQ;
   twoSQY := 2 * RadYSQ;
   x := 0;
@@ -866,7 +864,6 @@ begin
   px := 0;
   py := twoSQX * y;
 
-  { Plot the initial point in each quadrant }
   H := 4;
   SetLength(TPA, H);
   TPA[0] := Point(Center.x + x, Center.y + y);
@@ -943,10 +940,10 @@ end;
  |> Given a Array of Points, imagine that you where to put a rubber band around am...
  |> The points which strech the rubber band are the points returned by this algorithm.
 
- Time complexity: O(mn) (M as in Width, and N as in Height) before sorting the points..
- Once sorted and cleaned it's close to O(n).
+ Complexity: `m*n` (M as in Width, and N as in Height) before sorting the points..
+ Once sorted and cleaned it's close to `n` (as in len(tpa)).
 
- @note: It can be made O(n log n) with the use of QuickSort-algorithm over `CleanSortTPA(TPA)`.
+ It can be made worst case `n log n` with the use of a fast sorting-algorithm over `CleanSortTPA(TPA)`.
 *}
 
 {*__PRIVATE__
@@ -954,10 +951,11 @@ end;
   If the result is less then 0 then it forms a right turn, greater then 0 then it forms a left turn.
   @note: This is mainly just used in ConvexHull, but it can be used for more.
 *}
-function __VectorTurn(const p, q, r: TPoint): Boolean; Inline; StdCall;
+function __VectorTurn(const p, q, r: TPoint): Boolean; Inline;
 begin
   Result := (((q.x*r.y + p.x*q.y + r.x*p.y) - (q.x*p.y + r.x*q.y + p.x*r.y)) < 0);
-end; 
+end;
+ 
 function ConvexHull(const TPA:TPointArray): TPointArray; StdCall;
 var
   Pts, Lower: TPointArray;
@@ -973,7 +971,7 @@ begin
     Exit;
   end;
 
-  // Upper half..
+  (* Upper half.. *)
   UH := 2;
   SetLength(Result, H+1);
   Result[0] := Pts[0];
@@ -990,7 +988,7 @@ begin
     end;
   end;
 
-  // Lower half..
+  (* Lower half.. *)
   LH := 2;
   SetLength(Lower, H+1);
   Lower[0] := Pts[H];
@@ -1025,10 +1023,11 @@ end;
 *}
 function FloodFillTPAEx(const TPA:TPointArray; const Start:TPoint; EightWay, KeepEdges:Boolean): TPointArray; StdCall;
 var
-  I,S,j,qsize,x,y,H,fj:Integer;
-  queue,face:TPointArray;
+  I,S,j,x,y,H,fj:Integer;
+  face:TPointArray;
   Matrix:T2DBoolArray;
   Area: TBox;
+  Queue: TPAStack;
 begin
   Area := TPABounds(TPA);
   Area.x2 := (Area.x2 - Area.x1) + 1;
@@ -1046,18 +1045,17 @@ begin
 
   I := 0;
   if KeepEdges then I := H+1;
-  qsize := Min(1000, (Area.x2)*(Area.y2));
-  SetLength(queue, qsize+1);
-  queue[0] := Point((Start.x - Area.x1), (Start.y - Area.y1));
   fj := 3;
-  if EightWay then
-    fj := 7;
+  if EightWay then fj := 7;
   SetLength(Face, fj+1);
-  S := 1;
-  while (S > 0) do begin
-    Dec(S);
-    GetAdjacent(Face, queue[S], EightWay);
-    for j:=0 to fj do begin
+
+  Queue.Init;
+  Queue.Append(Point((Start.x-Area.x1), (Start.y-Area.y1)));
+  while Queue.NotEmpty do
+  begin
+    GetAdjacent(Face, Queue.FastPop, EightWay);
+    for j:=0 to fj do
+    begin
       x := face[j].x;
       y := face[j].y;
       if ((x >= 0) and (y >= 0) and (x <= Area.x2) and (y <= Area.y2)) then
@@ -1065,21 +1063,15 @@ begin
         if Matrix[y][x] <> True then
         begin
           Matrix[y][x] := True;
-          if (QSize <= S) then begin
-            QSize := QSize+QSize;
-            SetLength(queue, QSize);
-          end;
-          queue[S] := face[j];
-          Inc(S);
+          Queue.Append(face[j]);
           Result[i] := Point((x + Area.x1), (y + Area.y1));
           Inc(I);
         end;
       end;
     end;
   end;
-
+  Queue.Free;
   SetLength(Face, 0);
-  SetLength(queue, 0);
   SetLength(Matrix, 0);
   SetLength(Result, I);
 end;
@@ -1278,8 +1270,9 @@ var
   R,qsize,fsize,Count,S,j,L:Integer;
   Area:TBox;
   Matrix,Table:T2DIntArray;
-  queue, face:TPointArray;
-  pt,adj:TPoint;
+  face:TPointArray;
+  Queue: TPAStack;
+  pt,adj,testpt:TPoint;
 begin
   Area := TPABounds(TPA);
   Area.x1 := Area.x1 - 3;
@@ -1348,7 +1341,7 @@ begin
   //--------------
   //Simply floodfill the resulting boxes.
   qsize := L;
-  SetLength(queue, qsize+1);
+  Queue.Init;
 
   fsize := 7;
   if EightWay = False then fsize := 3;
@@ -1361,25 +1354,17 @@ begin
     if Matrix[pt.y][pt.x] = -2 then
     begin
       Matrix[pt.y][pt.x] := Count;
-      queue[0] := pt;
-      S := 1;
-      while (s > 0) do
+      Queue.Append(pt);
+      while Queue.NotEmpty do
       begin
-        Dec(S);
-        GetAdjacent(Face, queue[S], EightWay);
+        GetAdjacent(Face, Queue.FastPop, EightWay);
         for j:=0 to fsize do
         begin
           adj := face[j];
           if Matrix[adj.y][adj.x] = -2 then
           begin
             Matrix[adj.y][adj.x] := Count;
-            if QSize <= S then
-            begin
-              QSize := QSize+QSize;
-              SetLength(queue, QSize);
-            end;
-            queue[S] := adj;
-            Inc(S);
+            Queue.Append(Adj);
           end;
         end;
       end;
@@ -1387,8 +1372,8 @@ begin
     end;
   end;
   SetLength(Face, 0);
-  SetLength(queue, 0);
-  
+  Queue.Free;
+
   //-----------
   // Creating the result.
   SetLength(Result, Count);
@@ -1424,120 +1409,5 @@ begin
   Result := ClusterTPAEx(TPA, Distance,Distance, EightWay);
 end;
 
-
-
-{*
- @TPASkeleton: 
- Given a set of points, this function should thin the TPA down to it's bare Skeleton.
- It also takes two modifiers which allow you to change the outcome.
- By letting eather FMin, or FMax be -1 then it will be set to it's defaults which are 2 and 6.
-*}
-
-{* __PRIVATE__ *}
-function __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9:Integer): Integer; Inline;
-begin
-  Result := 0;
-  if ((p2 = 0) and (p3 = 1)) then Inc(Result);
-  if ((p3 = 0) and (p4 = 1)) then Inc(Result);
-  if ((p4 = 0) and (p5 = 1)) then Inc(Result);
-  if ((p5 = 0) and (p6 = 1)) then Inc(Result);
-  if ((p6 = 0) and (p7 = 1)) then Inc(Result);
-  if ((p7 = 0) and (p8 = 1)) then Inc(Result);
-  if ((p8 = 0) and (p9 = 1)) then Inc(Result);
-  if ((p9 = 0) and (p2 = 1)) then Inc(Result);
-end;
-
-function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; StdCall;
-var
-  j,i,x,y,h,transit,sumn,SwapHigh,hits: Integer;
-  p2,p3,p4,p5,p6,p7,p8,p9:Integer;
-  Change, PTS: TPointArray;
-  Matrix: T2DByteArray;
-  iter : Boolean;
-  Area: TBox;
-begin
-  Area := TPABounds(TPA);
-  Area.x1 := Area.x1 - 2;
-  Area.y1 := Area.y1 - 2;
-  Area.x2 := (Area.x2 - Area.x1) + 2;
-  Area.y2 := (Area.y2 - Area.y1) + 2;
-  SetLength(Matrix, Area.y2, Area.x2);
-  H := High(TPA);
-  if (FMin = -1) then FMin := 2;
-  if (FMax = -1) then FMax := 6;
-  
-  if (FMin > FMax) then begin
-    i := FMax;
-    FMax := FMin;
-    FMin := i;
-  end;
-
-  SetLength(PTS, H + 1);
-  for i:=0 to H do
-  begin
-    x := (TPA[i].x-Area.x1);
-    y := (TPA[i].y-Area.y1);
-    PTS[i] := Point(x,y);
-    Matrix[y][x] := 1;
-  end;
-  j := 0;
-  SwapHigh := H;
-  SetLength(Change, H+1);
-  repeat
-    iter := (J mod 2) = 0;
-    Hits := 0;
-    i := 0;
-    while i < SwapHigh do begin
-      x := PTS[i].x;
-      y := PTS[i].y;
-      p2 := Matrix[y-1][x];
-      p4 := Matrix[y][x+1];
-      p6 := Matrix[y+1][x];
-      p8 := Matrix[y][x-1];
-
-      if (Iter) then begin
-        if (((p4 * p6 * p8) <> 0) or ((p2 * p4 * p6) <> 0)) then begin
-          Inc(i);
-          Continue;
-        end;
-      end else if ((p2 * p4 * p8) <> 0) or ((p2 * p6 * p8) <> 0) then
-      begin
-        Inc(i);
-        Continue;
-      end;
-
-      p3 := Matrix[y-1][x+1];
-      p5 := Matrix[y+1][x+1];
-      p7 := Matrix[y+1][x-1];
-      p9 := Matrix[y-1][x-1];
-      Sumn := (p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9);
-      if (SumN >= FMin) and (SumN <= FMax) then begin
-        Transit := __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9);
-        if (Transit = 1) then begin
-          Change[Hits] := PTS[i];
-          Inc(Hits);
-          PTS[i] := PTS[SwapHigh];
-          PTS[SwapHigh] := Point(x,y);
-          Dec(SwapHigh);
-          Continue;
-        end;
-      end;
-      Inc(i);
-    end;
-
-    for i:=0 to (Hits-1) do
-      Matrix[Change[i].y][Change[i].x] := 0;
-
-    inc(j);
-  until ((Hits=0) and (Iter=False));
-
-  SetLength(Result, (SwapHigh + 1));
-  for i := 0 to SwapHigh do
-    Result[i] := Point(PTS[i].x+Area.x1, PTS[i].y+Area.y1);
-
-  SetLength(PTS, 0);
-  SetLength(Change, 0);
-  SetLength(Matrix, 0);
-end;
 
 end.

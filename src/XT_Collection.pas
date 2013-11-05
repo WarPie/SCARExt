@@ -21,9 +21,14 @@ function TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boole
 function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
 //Other----------->
 procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
-function NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
-procedure ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer); StdCall;
-function ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
+function NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
+procedure MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer); StdCall;
+function MatGetValues(const Mat:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
+function MatGetCol(const Mat:T2DIntArray; Column:Integer): TIntArray; StdCall;
+function MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray; StdCall;
+function MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray; StdCall;
+function MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray; StdCall;
+function MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
 
 
@@ -136,7 +141,6 @@ begin
 end;
 
 
-
 {*
  Quickly create a boolean matrix of the size given my W,H, and initalize it with `init`.
 *}
@@ -245,18 +249,18 @@ end;
 
 
 //---------------- OTHER -----------------
-function NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
+function NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 var
   x,y,H,W: Integer;
   k,mx: Extended;
 begin
-  W := High(ATIA[0]);
-  H := High(ATIA);
+  W := High(Mat[0]);
+  H := High(Mat);
   mx := 0;
   for y:=0 to H do
     for x:=0 to W do
-      if (ATIA[y][x] > mx) then
-        mx := ATIA[y][x];
+      if (Mat[y][x] > mx) then
+        mx := Mat[y][x];
 
   Beta := Beta - Alpha;
   k := 0.0;
@@ -266,32 +270,32 @@ begin
   SetLength(Result, H+1,W+1);
   for y:=0 to H do
     for x:=0 to W do
-      Result[y][x] := Alpha + Round(ATIA[y][x]*k);
+      Result[y][x] := Alpha + Round(Mat[y][x]*k);
 end;
 
 
-procedure ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer); StdCall;
+procedure MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer); StdCall;
 var x,y,W,H:Integer;
 begin
-  W := Min(High(ATIA[0]), High(ATIA2[0])); 
-  H := Min(High(ATIA), High(ATIA2)); 
+  W := Min(High(Mat[0]), High(Mat2[0])); 
+  H := Min(High(Mat), High(Mat2)); 
   for y:=0 to H do
     for x:=0 to W do
-      if (ATIA[y][x] = Value) then
-        ATIA[y][x] := ATIA2[y][x];
+      if (Mat[y][x] = Value) then
+        Mat[y][x] := Mat2[y][x];
 end;
 
 
 {*
-  Returns the values at each given point (TPA), in the ATIA.
+  Returns the values at each given point (TPA), in the Matrix.
 *}
-function ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
+function MatGetValues(const Mat:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
 var
   i,W,H,c,L:Integer;
 begin
   L := High(Indices);
-  W := High(ATIA[0]); 
-  H := High(ATIA);
+  W := High(Mat[0]); 
+  H := High(Mat);
   SetLength(Result, L+1);
   c := 0;
   for i:=0 to L do
@@ -299,12 +303,91 @@ begin
     if (Indices[i].x >= 0) and (Indices[i].y >= 0) then
       if (Indices[i].x <= W) and (Indices[i].y <= H) then
       begin
-        Result[c] := ATIA[Indices[i].y][Indices[i].x];
+        Result[c] := Mat[Indices[i].y][Indices[i].x];
         Inc(c);
       end;
   end;
   SetLength(Result, c);
 end;
+
+
+{*
+  Returns the TIA containing all the values in the given column.
+*}
+function MatGetCol(const Mat:T2DIntArray; Column:Integer): TIntArray; StdCall;
+var
+  y,H:Integer;
+begin
+  H := High(Mat);
+  SetLength(Result, H+1);
+  for y:=0 to H do
+    Result[y] := Mat[y][Column];
+end;
+
+
+{*
+  Returns the TIA containing all the values in the given row.
+*}
+function MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray; StdCall;
+var
+  x,W:Integer;
+begin
+  W := High(Mat[0]);
+  SetLength(Result, W+1);
+  for x:=0 to W do
+    Result[x] := Mat[Row][x];
+end;
+
+
+{*
+  Returns the Matrix containing all the values in the given columns.
+*}
+function MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray; StdCall;
+var
+  x,y,H:Integer;
+begin
+  ToCol := Min(ToCol, High(Mat[0]));
+  H := High(Mat);
+  SetLength(Result, H+1, ToCol-FromCol+1);
+  for x:=FromCol to ToCol do
+    for y:=0 to H do
+      Result[y][x] := Mat[y][x];
+end;
+
+
+{*
+  Returns the Mat containing all the values in the given rows.
+*}
+function MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray; StdCall;
+var
+  x,y,W:Integer;
+begin
+  W := High(Mat[0]);
+  ToRow := Min(ToRow, High(Mat));
+  SetLength(Result, ToRow-FromRow+1, W+1);
+  for x:=0 to W do
+    for y:=FromRow to ToRow do
+      Result[y][x] := Mat[y][x];
+end;
+
+
+{*
+  Returns the matrix containing all the values in the given box.
+*}
+function MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
+var
+  x,y,W,H:Integer;
+begin
+  W := High(Mat[0]);
+  H := High(Mat);
+  x2 := Min(x2, W);
+  y2 := Min(y2, H);
+  SetLength(Result, y2-y1+1, x2-x1+1);
+  for x:=x1 to x2 do
+    for y:=y1 to y2 do
+      Result[y][x] := Mat[y][x];
+end;
+
 
 
 {*

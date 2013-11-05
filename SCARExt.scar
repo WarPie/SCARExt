@@ -13,7 +13,7 @@
 || Plus the plotting lib: TPlot!
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 type
-  XT_MatchAlgo = (LAB, LCH);
+  XT_MatchAlgo = (LAB, LCH, RGB);
 
 
 {* 
@@ -34,7 +34,7 @@ end;
 {*
  Copy the client area as bitmap from X->Y2
 *}
-function XT_ScreenAreaBMP(XS,YS,XE,YE: Integer): TSCARBitmap;
+function XT_ClientBMP(XS,YS,XE,YE: Integer): TSCARBitmap;
 begin 
   Result := GetClient.CaptureEx(XS,YS,XE,YE); 
 end;
@@ -50,19 +50,24 @@ end;
 
 
 {*
- Get all the pixels on the bitmap as a ATIA (ImgArray)..
+ Get all the pixels on the bitmap as a Matrix (ImgArray)..
 *}
-function XT_Bmp2Array(bmp: TSCARBitmap; DoFree:Boolean): T2DIntArray;
-var TIA:TIntArray;
-begin
-  TIA := BMP.GetPixels(TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1))); 
-  Result := XT_TIAToATIA(TIA, BMP.Width,  BMP.Height);  
-  if DoFree then BMP.Free;
+function XT_Bmp2Matrix(bmp: TSCARBitmap; DoFree:Boolean): T2DIntArray;
+var
+  TIA: TIntArray;
+  TPA: TPointArray;
+begin  
+  TPA := TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1));
+  TIA := BMP.GetPixels(TPA);
+  Result := XT_TIAToMat(TIA, BMP.Width,  BMP.Height); 
+  if DoFree then BMP.Free; 
+  SetLengthTIA(TIA, 0);
+  SetLengthTPA(TPA, 0);
 end;
 
 
 {*
- Set all the pixels from an ATIA (ImgArray) to the bitmap..
+ Set all the pixels from an Matrix (ImgArray) to the bitmap..
 *}
 procedure XT_BmpSetData(var bmp: TSCARBitmap; Matrix:T2DIntArray; Adapt:Boolean);
 var 
@@ -75,13 +80,13 @@ begin
     if (W > bmp.Width) or (H > bmp.Height) then
       bmp.SetSize(Max(W,bmp.Width),Max(H,bmp.Height));
   TPA := TPAFromBox(Box(0, 0, W-1, H-1));
-  bmp.SetPixelsEx(TPA, XT_ATIAGetValues(Matrix, TPA));
-  SetLength(TPA, 0);
+  bmp.SetPixelsEx(TPA, XT_MatGetValues(Matrix, TPA));
+  SetLengthTPA(TPA, 0);
 end;
 
 
 {*
- Set all the pixels from an ATIA (ImgArray) to the bitmap. 
+ Set all the pixels from an Matrix (ImgArray) to the bitmap. 
  If the Matrix contains AlphaColor then that pixel/index will not be changed in the bitmap..
 *}
 procedure XT_BmpSetDataEx(var bmp: TSCARBitmap; Matrix:T2DIntArray; Adapt:Boolean; AlphaColor:Integer);
@@ -95,48 +100,94 @@ begin
   H := Length(Matrix);
   NewW := Max(W, bmp.Width);
   NewH := Max(H, bmp.Height);
-  Mat := XT_Bmp2Array(bmp, False);
+  Mat := XT_Bmp2Matrix(bmp, False);
   if Adapt then
     if (NewW <> bmp.Width) or (NewH <> bmp.Height) then
       bmp.SetSize(NewW,NewH);
   TPA := TPAFromBox(Box(0, 0, W-1, H-1)); 
-  XT_ATIACombine(Matrix, Mat, AlphaColor); 
-  bmp.SetPixelsEx(TPA, XT_ATIAGetValues(Matrix, TPA));
-  SetLength(TPA, 0);
-  SetLength(Mat, 0);
+  XT_MatCombine(Matrix, Mat, AlphaColor); 
+  bmp.SetPixelsEx(TPA, XT_MatGetValues(Matrix, TPA));
+  SetLengthTPA(TPA, 0);
+  SetLengthATIA(Mat, 0);
 end;
+
+
+{*
+ Loads a bitmap directly in to a matrix.
+*}
+function XT_LoadBmpToMatrix(Path:String; Ext:String):T2DIntArray;
+var 
+  Img: TSCARBitmap;
+begin
+  Img := TSCARBitmap.Create('');
+  case Ext of
+    'png': if not(Img.LoadFromPng(Path)) then Exit;
+    'jpg': if not(Img.LoadFromJpeg(Path)) then Exit;
+    'bmp': if not(Img.LoadFromBmp(Path)) then Exit;
+    else Exit;
+  end;
+  Result := XT_Bmp2Matrix(Img, True);
+end;
+
+
+{*
+ Saves a Matrix to the computer as a bitmap.
+*}
+function XT_MatrixSaveAs(Matrix:T2DIntArray; Path:String; Ext:String): Boolean;
+var 
+  Img: TSCARBitmap;
+begin
+  Result := False;
+  Img := TSCARBitmap.Create('');
+  XT_BmpSetData(Img, Matrix, True);
+  case Ext of
+    'png': if not(Img.SaveToPng(Path)) then Exit;
+    'jpg': if not(Img.SaveToJpeg(Path, 100)) then Exit;
+    'bmp': if not(Img.SaveToBmp(Path)) then Exit;
+    else Exit;
+  end;
+  Result := True;
+  Img.Free;
+end;
+
 
 
 (*
   Fills the TPA with the found colors. It currently supports two algorithms CIE-LAB, and CIE-LCH.
   For CIE-LCH:
-    ATol = Tolerance for Chroma, and Lightness. It maxes at 142.
-    BTol = Tolerance for Hue. It maxes at 180.
+    ColorTol = Hue tolerance (180 = tolmax).
+    LightTol = Lightness and Chroma (142 = tolmax).
 
   For CIE-LAB:
-   ATol = Tolerance for A and B, they meassure the Chroma and Hue. It maxes at 142.
-   BTol = Tolerance for Lightness. It maxes at 100.
+    ColorTol = A and B, together they meassure the Chroma and Hue. (142 = tolmax).
+    LightTol = Lightness (100 = tolmax).
+    
+  For RGB:
+    ColorTol = R,G,B tolerance. (255 = tolmax).
+    LightTol = Not used.
 *)
-function XT_FindColorTolEx(var TPA:TPointArray; Color:Integer; XS,YS,XE,YE:Integer; ATol,BTol:Integer; MatchAlgo: XT_MatchAlgo): Boolean;
+function XT_FindColorTolEx(var TPA:TPointArray; Color:Integer; Area:TBox; ColorTol, LightTol:Integer; MatchAlgo: XT_MatchAlgo): Boolean;
 var 
   W,H:Integer;
   Img:T2DIntArray;
 begin
   Result := False;
-  XT_ClientSize(W,H); 
-  if (XE > W) or (XE = -1) then XE := W;
-  if (YE > H) or (YE = -1) then YE := H;
-  if (XS > XE) or (YS > YE) then Exit;
+  XT_ClientSize(W,H);
+   
+  if (Area.X2 > W) or (Area.X2 <= -1) then Area.X2 := W;
+  if (Area.Y2 > H) or (Area.Y2 <= -1) then Area.Y2 := H;
+  if (Area.X1 > Area.X2) or (Area.Y1 > Area.Y2) then Exit;
   
-  Img := XT_Bmp2Array(XT_ScreenAreaBMP(XS,YS,XE,YE), true);
-  case MatchAlgo of 
-    LAB: Result := XTCore_FindColorTolExLAB(Img, TPA, Color, ATol, BTol);
-    LCH: Result := XTCore_FindColorTolExLCH(Img, TPA, Color, ATol, BTol);
-  end;
-  SetLength(Img, 0);
-  if (XS=0) and (YS=0) then Exit;
-  XT_MoveTPA(TPA,XS,YS);
-  
+  Img := XT_Bmp2Matrix(XT_ClientBMP(Area.X1,Area.Y1,Area.X2,Area.Y2), true); //Results in a bit of overhead. 
+  case MatchAlgo of   
+    RGB: Result := XT_ImFindColorTolEx(Img, TPA, Color, ColorTol);
+    LAB: Result := XT_ImFindColorTolExLAB(Img, TPA, Color, ColorTol, LightTol);
+    LCH: Result := XT_ImFindColorTolExLCH(Img, TPA, Color, ColorTol, LightTol);
+  end; 
+  SetLengthATIA(Img, 0);
+  if not(Result) then Exit;
+  if (Area.X1=0) and (Area.Y1 = 0) then Exit;
+  XT_MoveTPA(TPA, Area.X1, Area.Y1);
 end;
 
 
@@ -149,7 +200,7 @@ var
   W,H:Integer;
 begin
   XT_ClientSize(W,H);
-  Img := XT_Bmp2Array(XT_ScreenAreaBMP(0,0,W,H), True);
+  Img := XT_Bmp2Matrix(XT_ClientBMP(0,0,W,H), True);
   Result := XT_ImCEdges(Img, MinDiff);
-  SetLength(Img, 0);
+  SetLengthATIA(Img, 0);
 end;

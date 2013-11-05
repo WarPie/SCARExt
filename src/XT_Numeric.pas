@@ -15,7 +15,7 @@ function TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray; StdCal
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
 procedure TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
-function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
+function TIAToMat(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 
 
 //--------------------------------------------------
@@ -171,7 +171,7 @@ end;
 {*
   ...
 *}
-function TIAToATIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
+function TIAToMat(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 var x,y,i:Integer;
 begin
   SetLength(Result, Height,Width);

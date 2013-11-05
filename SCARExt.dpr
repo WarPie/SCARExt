@@ -16,6 +16,7 @@ uses
   XT_Math,
   XT_Collection,
   XT_ColorMath,
+  XT_TPAStack,
   XT_HashTable,
   XT_Numeric,
   XT_Imaging,
@@ -23,6 +24,7 @@ uses
   XT_Points,
   XT_Finder,
   XT_CSpline,
+  XT_Morphology,
   XT_DensityMap,
   XT_TPAExtShape;
 
@@ -80,7 +82,7 @@ begin
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
   AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
   AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
-  AddCommand(@TIAToATIA, 'function XT_TIAToATIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
+  AddCommand(@TIAToMat, 'function XT_TIAToMat(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
 
 
   //** Sorting.pas **//
@@ -93,8 +95,9 @@ begin
 
 
   //** Finder.pas **//
-  AddCommand(@FindColorTolExLCH, 'function XTCore_FindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
-  AddCommand(@FindColorTolExLAB, 'function XTCore_FindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
+  AddCommand(@ImFindColorTolEx,    'function XT_ImFindColorTolEx(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, Tol:Integer): Boolean;');
+  AddCommand(@ImFindColorTolExLCH, 'function XT_ImFindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
+  AddCommand(@ImFindColorTolExLAB, 'function XT_ImFindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   
   
   //** DensityMap.pas **//
@@ -161,10 +164,14 @@ begin
   AddCommand(@TPAToBoolMatrix,    'function XT_TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray;');
   AddCommand(@TPAToBoolMatrixNil, 'function XT_TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DIntArray;');
   
-  AddCommand(@NormalizeATIA,  'function XT_NormalizeATIA(const ATIA:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
-  AddCommand(@ATIAGetValues,  'function XT_ATIAGetValues(const ATIA:T2DIntArray; const Indices:TPointArray): TIntArray;');
-  AddCommand(@ATIACombine,    'procedure XT_ATIACombine(var ATIA:T2DIntArray; const ATIA2:T2DIntArray; Value:Integer);');
-  
+  AddCommand(@NormalizeMat,  'function XT_NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
+  AddCommand(@MatGetValues,  'function XT_MatGetValues(const Mat:T2DIntArray; const Indices:TPointArray): TIntArray;');
+  AddCommand(@MatCombine,    'procedure XT_MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer);');
+  AddCommand(@MatGetCol,     'function XT_MatGetCol(const Mat:T2DIntArray; Column:Integer): TIntArray;'); 
+  AddCommand(@MatGetRow,     'function XT_MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray;');
+  AddCommand(@MatGetCols,    'function XT_MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray;');
+  AddCommand(@MatGetRows,    'function XT_MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray;');
+  AddCommand(@MatGetBox,     'function XT_MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray;');
   
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
@@ -179,6 +186,20 @@ begin
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
   AddCommand(@RandomCenterTPA,'function XT_RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray;');
   AddCommand(@RandomTIA,      'function XT_RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray;');
+
+  
+  //** Faster SetLength for PS **//
+  AddCommand(@SetLengthTPA,  'procedure SetLengthTPA(var Arr: TPointArray; NewSize:Integer);');
+  AddCommand(@SetLengthTIA,  'procedure SetLengthTIA(var Arr: TIntArray; NewSize:Integer);');
+  AddCommand(@SetLengthTEA,  'procedure SetLengthTEA(var Arr: TExtArray; NewSize:Integer);');
+  AddCommand(@SetLengthTBA,  'procedure SetLengthTBA(var Arr: TByteArray; NewSize:Integer);');
+  AddCommand(@SetLengthTBoA,  'procedure SetLengthTBoA(var Arr: TBoolArray; NewSize:Integer);');
+  AddCommand(@SetLengthATIA,  'procedure SetLengthATIA(var Arr: T2DIntArray; NewSize:Integer);');
+  AddCommand(@SetLengthATEA,  'procedure SetLengthATEA(var Arr: T2DExtArray; NewSize:Integer);');
+  AddCommand(@SetLengthATBA,  'procedure SetLengthATBA(var Arr: T2DByteArray; NewSize:Integer);');
+  AddCommand(@SetLengthATBoA, 'procedure SetLengthATBoA(var Arr: T2DBoolArray; NewSize:Integer);');
+
+  
   CommandsLoaded := True;
 end;
 

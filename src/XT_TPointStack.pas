@@ -1,4 +1,4 @@
-Unit XT_TPAStack;
+Unit XT_TPointStack;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  Copyright (c) 2013, Jarl K. <Slacky> Holta || http://github.com/WarPie
  All rights reserved.
@@ -10,10 +10,10 @@ uses
   XT_Types;
 
 const
-  STACKMINSIZE = 128;
+  STACKMINSIZE = 1024;
 
 type
-  TPAStack = record
+  TPointStack = record
   private
     _Arr: TPointArray;
     _High: Integer;
@@ -64,6 +64,18 @@ type
     *)
     function GetData: TPointArray; Inline;
 
+    
+    (*
+     Returns a copy of the TPA/Array.
+    *)
+    function Copy: TPointArray; Inline;
+    
+    
+    (*
+     Returns the last item
+    *)
+    function Peek: TPoint; Inline;
+    
 
     (*
      Remove the last item, and return what it was. It also downsizes the array if
@@ -81,7 +93,7 @@ type
     (*
      Insert a item at the given position. It resizes the array if needed.
     *)
-    procedure Insert(const Item: TPoint; Pos:Integer); Inline;
+    procedure Insert(const Item: TPoint; Index:Integer); Inline;
 
 
     (*
@@ -113,10 +125,15 @@ type
     
     
     (*
-     Remove the first item from the stack whose value is `Value`.
+     Move each point in the stack by X,Y.
     *)
-    procedure Move(MoveX, MoveY:Integer); Inline;
-
+    procedure Move(X,Y:Integer); Inline;
+    
+    
+    (*
+     Reverse the array...
+    *)
+    procedure Reverse; Inline;
     
     
     (*
@@ -124,6 +141,13 @@ type
     *)
     function Get(Index:Integer): TPoint; Inline;
 
+    
+    (*
+     Swaps to items of specified indexes. 
+    *)
+    procedure Swap(Index1, Index2: Integer); Inline;
+    
+    
     (*
      Check if the array is empty or not.
     *)
@@ -156,7 +180,7 @@ type
 
     (*
      It sets the overhead length down to the highest index + 1.
-     Mainly used in combination with `GetData` to decrese the array size to the "correct size".
+     It's used before a call to an external function, EG before using: GetTPABounds.
     *)
     procedure Fit; Inline;
   end;
@@ -168,7 +192,7 @@ implementation
 uses 
   XT_Math;
 
-procedure TPAStack.Init;
+procedure TPointStack.Init;
 begin
   _High := -1;
   _Length := STACKMINSIZE;
@@ -176,7 +200,7 @@ begin
 end;
 
 
-procedure TPAStack.InitWith(var TPA:TPointArray);
+procedure TPointStack.InitWith(var TPA:TPointArray);
 begin
   _Arr := TPA;
   _High := High(_Arr);
@@ -189,13 +213,15 @@ begin
 end;
 
 
-procedure TPAStack.Free;
+procedure TPointStack.Free;
 begin
+  _High := -1;
+  _Length := STACKMINSIZE;
   SetLength(_Arr, 0);
 end;
 
 
-procedure TPAStack.Reset;
+procedure TPointStack.Reset;
 begin
   _High := -1;
   _Length := STACKMINSIZE;
@@ -203,9 +229,9 @@ begin
 end;
 
 
-procedure TPAStack.CheckResize(NewSize:Integer);
+procedure TPointStack.CheckResize(NewSize:Integer);
 begin
-  if NewSize <= 64 then
+  if NewSize < 512 then
   begin
     _Length := STACKMINSIZE;
     _High := NewSize;
@@ -213,13 +239,13 @@ begin
   end;
   _High := NewSize;
   case (_High >= _Length) of
-  False:
+   False:
     if ((_Length div 2) > _High) then
     begin
       _Length := _Length div 2;
       SetLength(_Arr, _Length);
     end;
-  True:
+   True:
     begin
       _Length := _Length + _Length;
       SetLength(_Arr, _Length);
@@ -228,7 +254,7 @@ begin
 end;
 
 
-procedure TPAStack.CheckResizeHigh(NewSize:Integer);
+procedure TPointStack.CheckResizeHigh(NewSize:Integer);
 begin
   _High := NewSize;
   if (_High >= _Length) then
@@ -239,9 +265,9 @@ begin
 end;
 
 
-procedure TPAStack.CheckResizeLow(NewSize:Integer);
+procedure TPointStack.CheckResizeLow(NewSize:Integer);
 begin
-  if NewSize < 64 then
+  if NewSize < 512 then
   begin
     _Length := STACKMINSIZE;
     _High := NewSize;
@@ -256,21 +282,30 @@ begin
 end;
 
 
-function TPAStack.GetData: TPointArray;
+function TPointStack.GetData: TPointArray;
 begin
   Result := _Arr;
 end;
 
 
-function TPAStack.FastPop: TPoint;
+function TPointStack.Copy: TPointArray;
+var i:Integer;
 begin
-  if (_High = -1) then Exit(Point(-1,-1));
-  Result := _Arr[_High];
-  Dec(_High);
+  SetLength(Result, _High+1);
+  //Move(_Arr[0], Result[0], _High * SizeOf(TPoint)); //Not working ^__-
+  for i := 0 to _High do   //Hard copy.
+    Result[i] := _Arr[i];
 end;
 
 
-function TPAStack.Pop: TPoint;
+function TPointStack.Peek: TPoint;
+begin
+  if (_High = -1) then Exit(Point(-1,-1));
+  Result := _Arr[_High];
+end;
+
+
+function TPointStack.Pop: TPoint;
 begin
   if (_High = -1) then Exit(Point(-1,-1));
   Result := _Arr[_High];
@@ -279,18 +314,27 @@ begin
 end;
 
 
-procedure TPAStack.Insert(const Item: TPoint; Pos:Integer);
+function TPointStack.FastPop: TPoint;
 begin
-  if Pos > _High then
-  begin
-    _High := Pos;
-    CheckResizeHigh(_High)
-  end;
-  _Arr[Pos] := Item;
+  if (_High = -1) then Exit(Point(-1,-1));
+  Result := _Arr[_High];
+  Dec(_High);
 end;
 
 
-procedure TPAStack.Append(const Item: TPoint);
+
+procedure TPointStack.Insert(const Item: TPoint; Index:Integer);
+begin
+  if Index > _High then
+  begin
+    _High := Index;
+    CheckResizeHigh(_High)
+  end;
+  _Arr[Index] := Item;
+end;
+
+
+procedure TPointStack.Append(const Item: TPoint);
 begin
   Inc(_High);
   CheckResizeHigh(_High);
@@ -298,7 +342,7 @@ begin
 end;
 
 
-procedure TPAStack.Extend(const TPA: TPointArray);
+procedure TPointStack.Extend(const TPA: TPointArray);
 var
  i,_h,h:Integer;
 begin
@@ -312,7 +356,7 @@ begin
 end;
 
 
-procedure TPAStack.Remove(const Item: TPoint);
+procedure TPointStack.Remove(const Item: TPoint);
 var
  i,j:Integer;
  hit:Boolean;
@@ -342,7 +386,7 @@ begin
 end;
 
 
-procedure TPAStack.Delete(const Index: Integer);
+procedure TPointStack.Delete(const Index: Integer);
 var
  i,j:Integer;
 begin
@@ -367,7 +411,7 @@ begin
 end;
 
 
-procedure TPAStack.DeleteEx(const Indices: TIntArray);
+procedure TPointStack.DeleteEx(const Indices: TIntArray);
 var
  i,j,lo:Integer;
  Del:TBoolArray;
@@ -396,54 +440,79 @@ begin
 end;
 
 
-procedure TPAStack.Move(MoveX, MoveY:Integer);
+procedure TPointStack.Move(X, Y:Integer);
 var i: Integer;
 begin
   if (_High = -1) then Exit;
   for i:=0 to _High do begin
-    _Arr[i].x := _Arr[i].x + MoveX;
-    _Arr[i].y := _Arr[i].y + MoveY;
+    _Arr[i].x := _Arr[i].x + X;
+    _Arr[i].y := _Arr[i].y + Y;
   end;
 end;
 
 
-function TPAStack.Get(Index:Integer): TPoint;
+procedure TPointStack.Reverse;
+var 
+  i, Mid: Integer;
+  Tmp:TPoint;
+begin
+  if (_High <= 0) then Exit;
+  Mid := _High div 2;
+  for i := 0 to Mid do begin
+    Tmp := _Arr[_High-i];
+    _Arr[_High-i] := _Arr[i];
+    _Arr[i] := tmp;
+  end;
+end;
+
+
+function TPointStack.Get(Index:Integer): TPoint;
 begin
   Result := _Arr[Index];
 end;
 
 
-function TPAStack.IsEmpty: Boolean;
+
+procedure TPointStack.Swap(Index1, Index2: Integer);
+var Tmp:TPoint;
+begin
+  Tmp := _Arr[Index1];
+  _Arr[Index1] := _Arr[Index2];
+  _Arr[Index2] := Tmp;
+end;
+
+
+function TPointStack.IsEmpty: Boolean;
 begin
   Result := _High < 0;
 end;
 
 
-function TPAStack.NotEmpty: Boolean;
+function TPointStack.NotEmpty: Boolean;
 begin
   Result := _High > -1;
 end;
 
 
-function TPAStack.GetLength: Integer;
+function TPointStack.GetLength: Integer;
 begin
   Result := _Length;
 end;
 
 
-function TPAStack.GetHigh: Integer;
+function TPointStack.GetHigh: Integer;
 begin
   Result := _High;
 end;
 
 
-function TPAStack.GetSize: Integer;
+function TPointStack.GetSize: Integer;
 begin
   Result := _High + 1;
 end;
 
 
-procedure TPAStack.Fit;
+procedure TPointStack.Fit;
 begin
   _Length := _High + 1;
   SetLength(_Arr, _Length);

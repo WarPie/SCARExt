@@ -12,11 +12,11 @@ uses
 
   XT_Types,
   XT_Standard,
+  XT_TPointStack,
   XT_Sorting,
   XT_Math,
   XT_Collection,
   XT_ColorMath,
-  XT_TPAStack,
   XT_HashTable,
   XT_Numeric,
   XT_Imaging,

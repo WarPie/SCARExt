@@ -36,9 +36,9 @@ procedure TPALine(var TPA:TPointArray; const P1:TPoint; const P2: TPoint); Inlin
 function ConnectTPA(const TPA:TPointArray): TPointArray; Inline; StdCall;
 function ConnectTPAEx(TPA:TPointArray; Tension:Extended): TPointArray; Inline; StdCall;
 function XagonPoints(const Center:TPoint; Sides:Integer; const Dir:TPoint): TPointArray; Inline; StdCall;
-procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); Inline; StdCall;
-procedure TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer); Inline; StdCall;
-procedure TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint); inline; StdCall;
+procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); StdCall;
+procedure TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer); StdCall;
+procedure TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint); StdCall;
 function ConvexHull(const TPA:TPointArray): TPointArray; StdCall;
 function FloodFillTPAEx(const TPA:TPointArray; const Start:TPoint; EightWay, KeepEdges:Boolean): TPointArray; StdCall;
 function FloodFillTPA(const TPA:TPointArray; const Start:TPoint; EightWay:Boolean): TPointArray; StdCall;
@@ -53,7 +53,7 @@ function ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean)
 implementation
 
 uses 
-  XT_CSpline, XT_Collection, XT_Sorting, XT_TPAStack;
+  XT_CSpline, XT_Collection, XT_Sorting, XT_TPointStack;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -308,9 +308,10 @@ var
 begin
   SetLength(Result, 4); 
   if Length(TPA) <= 1 then Exit;
+
   Shape := ConvexHull(TPA);
-  L := Length(Shape) - 1;
-  halfpi := (PI/2);
+  L := High(Shape);
+  halfpi := PI / 2;
   SetLength(angles, L);
   
   j := 0;    
@@ -322,12 +323,13 @@ begin
     edge_y := Shape[i+1].y - Shape[i].y; 
     Angle := Abs(Modulo(ArcTan2(edge_y, edge_x), halfpi));
     for c:=0 to j do
-      if (angles[c] = Angle) then Added := True; 
+      if (Angles[c] = Angle) then Added := True;
     if not(Added) then begin 
-      angles[j] := Angle;
+      Angles[j] := Angle;
       Inc(j);
     end;     
-  end;                    
+  end;
+
   SetLength(angles, j); 
   SetLength(BBox, 6);
   BBox[1] := MaxInt;
@@ -360,6 +362,7 @@ begin
       BBox[5] := yh;
     end;
   end;
+
   Angle := bbox[0];   
   cosA  := Cos(Angle);
   cosAP := Cos(Angle+halfpi);
@@ -558,9 +561,9 @@ end;
 {*
  Unlike RotateTPA found in SCAR-Divi this function tries to keep the TPA filled even after rotation.
  The function is simply adding the surrounding pixels for each point to the result.
- then it will filter out duplicates. The result may then be 1px larger then original in each direction.
+ then it will filter out duplicates. The result may then be 1px larger then original in any direction.
  
- //Future: Should look in to rotating the TPA first, then filling all small holes. Will be faster.
+ //Future: Should look in to rotating the TPA first, then filling all small holes. Will be better.
 *}
 function RotateTPAEx(const TPA: TPointArray; const Center:TPoint; Radians: Extended): TPointArray;StdCall;
 var
@@ -640,7 +643,6 @@ end;
 {*
  Removes duplicates, and sorts the TPA by Column.
  Uses a Matrix, so it limited, but should be fast for High density TPAs.
- Complexity is around W*H+n*2
 *}
 function CleanSortTPA(const TPA: TPointArray): TPointArray; StdCall;
 var
@@ -851,9 +853,10 @@ end;
  Creates all the points needed to define a Ellipse.
  Algorithm is based on Bresenham's circle algorithm, tho might be more similr to MidPoint-Circle.
 *}
-procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); Inline; StdCall;
+procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); StdCall;
 var
   RadXSQ,RadYSQ,TwoSQX,TwoSQY,p,x,y,px,py,H:Integer;
+  Stack: TPointStack;
 begin
   RadXSQ := Sqr(RadX);
   RadYSQ := Sqr(RadY);
@@ -863,13 +866,12 @@ begin
   y := RadY;
   px := 0;
   py := twoSQX * y;
-
-  H := 4;
-  SetLength(TPA, H);
-  TPA[0] := Point(Center.x + x, Center.y + y);
-  TPA[1] := Point(Center.x - x, Center.y + y);
-  TPA[2] := Point(Center.x + x, Center.y - y);
-  TPA[3] := Point(Center.x - x, Center.y - y);
+  
+  Stack.InitWith(TPA);
+  Stack.Append(Point(Center.x + x, Center.y + y));
+  Stack.Append(Point(Center.x - x, Center.y + y));
+  Stack.Append(Point(Center.x + x, Center.y - y));
+  Stack.Append(Point(Center.x - x, Center.y - y));
 
   {* Region 1 *}
   p := Round(RadYSQ - (RadXSQ * RadY) + (0.25 * RadXSQ));
@@ -884,12 +886,10 @@ begin
       py := py - twoSQX;
       p := p + (RadYSQ + px - py);
     end;
-    H := H + 4;
-    SetLength(TPA, H);
-    TPA[H-1] := Point(Center.x + x, Center.y + y);
-    TPA[H-2] := Point(Center.x - x, Center.y + y);
-    TPA[H-3] := Point(Center.x + x, Center.y - y);
-    TPA[H-4] := Point(Center.x - x, Center.y - y);
+    Stack.Append(Point(Center.x + x, Center.y + y));
+    Stack.Append(Point(Center.x - x, Center.y + y));
+    Stack.Append(Point(Center.x + x, Center.y - y));
+    Stack.Append(Point(Center.x - x, Center.y - y));
   end;
 
   {* Region 2 *}
@@ -905,13 +905,13 @@ begin
       px := px + twoSQY;
       p := p + (RadXSQ - py + px);
     end;
-    H := H + 4;
-    SetLength(TPA, H);
-    TPA[H-1] := Point(Center.x + x, Center.y + y);
-    TPA[H-2] := Point(Center.x - x, Center.y + y);
-    TPA[H-3] := Point(Center.x + x, Center.y - y);
-    TPA[H-4] := Point(Center.x - x, Center.y - y);
+    Stack.Append(Point(Center.x + x, Center.y + y));
+    Stack.Append(Point(Center.x - x, Center.y + y));
+    Stack.Append(Point(Center.x + x, Center.y - y));
+    Stack.Append(Point(Center.x - x, Center.y - y));
   end;
+  TPA := Stack.Copy;
+  Stack.Free;
 end;
 
 
@@ -919,7 +919,7 @@ end;
  Creates all the points needed to define a Circle.
  Algorithm is based on Bresenham's circle algorithm, tho might be more similr to MidPoint-Circle.
 *}
-procedure TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer); Inline; StdCall;
+procedure TPACircle(var TPA:TPointArray; const Center: TPoint; Radius:Integer); StdCall;
 begin
   TPAEllipse(TPA, Center, Radius, Radius);
 end;
@@ -929,7 +929,7 @@ end;
  Uses `SimplePolyPoints` combined with ConnectTPA to draw a line trough each
  point given by `SimplePolyPoints`. So we get a "proper polygon".
 *}
-procedure TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint); inline; StdCall;
+procedure TPASimplePoly(var TPA:TPointArray; const Center:TPoint; Sides:Integer; const Dir:TPoint); StdCall;
 begin
   TPA := ConnectTPA(XagonPoints(Center, Sides, Dir));
 end;
@@ -1027,7 +1027,7 @@ var
   face:TPointArray;
   Matrix:T2DBoolArray;
   Area: TBox;
-  Queue: TPAStack;
+  Queue: TPointStack;
 begin
   Area := TPABounds(TPA);
   Area.x2 := (Area.x2 - Area.x1) + 1;
@@ -1089,11 +1089,12 @@ end;
 *}
 function TPAOutline(const TPA:TPointArray): TPointArray; StdCall;
 var
-  i,j,h,x,y,l,hit,qsize:Integer;
+  i,j,h,x,y,hit:Integer;
   Matrix: T2DIntArray;
   adj: TPointArray;
   start,prev,endpt:TPoint;
   Area: TBox;
+  Stack: TPointStack;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1111,19 +1112,17 @@ begin
     if y < Start.y then
       Start := Point(x,y);
   end;
-
+  
   H := H*4;
   endpt := start;
   prev := Point(start.x, start.y-1);
   hit := 0;
-  qsize := 1;
-  SetLength(Result, qsize);
-  Result[0] := Point((Start.x+Area.x1), (Start.y+Area.y1));
+  Stack.Init;
+  Stack.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
   SetLength(adj, 8);
-  L := 0;
   for i:=0 to H do
   begin
-    if ((endpt.x = prev.x) and (endpt.y = prev.y) and (i>1)) then begin
+    if (SamePoints(endpt, prev) and (i>1)) then begin
       if hit = 1 then Break;
       Inc(hit);
     end;
@@ -1139,20 +1138,15 @@ begin
           start := adj[j];
           if Matrix[y][x]=1 then
           begin
-            Inc(L);
-            if (QSize <= L) then begin
-              QSize := QSize+QSize;
-              SetLength(Result, QSize);
-            end;
-            Result[L-1] := Point((Start.x+Area.x1), (Start.y+Area.y1));
+            Stack.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
             Matrix[y][x] := 2;
           end;
           break;
         end;
     end;
   end;
-  if L = 0 then Inc(L);
-  SetLength(Result, L);
+  Result := Stack.Copy;
+  Stack.Free;
   SetLength(Adj, 0);
   SetLength(Matrix, 0);
 end;
@@ -1165,12 +1159,13 @@ end;
 *}
 function TPABorder(const TPA:TPointArray): TPointArray; StdCall;
 var
-  i,j,h,x,y,l,hit,qsize:Integer;
+  i,j,h,x,y,hit:Integer;
   Matrix: T2DIntArray;
   adj: TPointArray;
   start,prev,endpt:TPoint;
   Area: TBox;
   isset:Boolean;
+  Stack: TPointStack;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1203,13 +1198,12 @@ begin
   endpt := Start;
   prev := Point(start.x, start.y-1);
   hit := 0;
-  qsize := 1;
-  SetLength(Result, qsize);
+  Stack.Init;
+
   SetLength(adj, 8);
-  L := 0;
   for i:=0 to H do
   begin
-    if ((endpt.x = start.x) and (endpt.y = start.y) and (i>1)) then begin
+    if (SamePoints(endpt, start) and (i>1)) then begin
       if hit = 1 then Break;
       Inc(hit);
     end;
@@ -1219,16 +1213,10 @@ begin
       y := adj[j].y;
       if (x >= 0) and (x < Area.X2) and
          (y >= 0) and (y < Area.Y2) then
-        if Matrix[y][x] <= 0 then
-        begin
+        if Matrix[y][x] <= 0 then begin
           if Matrix[y][x] = 0 then
           begin
-            Inc(L);
-            if (QSize <= L) then begin
-              QSize := QSize+QSize;
-              SetLength(Result, QSize);
-            end;
-            Result[L-1] := Point((adj[j].x+Area.x1), (adj[j].y+Area.y1));
+            Stack.Append(Point((adj[j].x+Area.x1), (adj[j].y+Area.y1)));
             Dec(Matrix[y][x]);
           end;
         end else if Matrix[y][x] >= 1 then
@@ -1239,7 +1227,8 @@ begin
         end;
     end;
   end;
-  SetLength(Result, L);
+  Result := Stack.Copy;
+  Stack.Free;
   SetLength(Adj, 0);
   SetLength(Matrix, 0);
 end;
@@ -1271,7 +1260,7 @@ var
   Area:TBox;
   Matrix,Table:T2DIntArray;
   face:TPointArray;
-  Queue: TPAStack;
+  Queue: TPointStack;
   pt,adj,testpt:TPoint;
 begin
   Area := TPABounds(TPA);

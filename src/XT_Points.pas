@@ -16,7 +16,8 @@ function ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline; St
 function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
 procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
 function TPAMax(const TPA: TPointArray): TPoint;
-function TPABounds(const TPA: TPointArray): TBox;
+function TPABounds(const TPA: TPointArray): TBox; Inline;
+function TPAContainer(const TPA: TPointArray): TCont; Inline;
 function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint; StdCall;
 function TPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
 function TPABBox(const TPA:TPointArray): TPointArray; StdCall;
@@ -47,6 +48,7 @@ function TPABorder(const TPA:TPointArray): TPointArray; StdCall;
 function FloodFillPolygon(const Poly:TPointArray; EightWay:Boolean): TPointArray; StdCall;
 function ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray; StdCall;
 function ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean): T2DPointArray; StdCall;
+function TPAEdges(const TPA: TPointArray): TPointArray; StdCall;
 
 
 //--------------------------------------------------
@@ -104,8 +106,7 @@ end;
 
 
 {*
- Return the outer point at the angle of the vector "Center->Pt". 
- The outer point is defined as Center + Radius, and the angle of "Center->Pt".
+ Scales the point, while keeping the angle from the center.
 *}
 function ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline; StdCall;
 var
@@ -176,10 +177,10 @@ end;
 {*
  Return the largest and the smallest numbers for x, and y-axis in TPA.
 *}
-function TPABounds(const TPA: TPointArray): TBox;
+function TPABounds(const TPA: TPointArray): TBox; Inline;
 var
   I,L : Integer;
-begin;
+begin
   FillChar(Result, SizeOf(TBox), 0);
   L := High(TPA);
   if (l < 0) then Exit;
@@ -188,7 +189,7 @@ begin;
   Result.x2 := TPA[0].x;
   Result.y2 := TPA[0].y;
   for I:= 1 to L do
-  begin;
+  begin
     if TPA[i].x > Result.x2 then
       Result.x2 := TPA[i].x
     else if TPA[i].x < Result.x1 then
@@ -198,6 +199,20 @@ begin;
     else if TPA[i].y < Result.y1 then
       Result.y1 := TPA[i].y;
   end;
+end;
+
+
+{*
+ Return the smallest numbers for x, and y-axis in TPA, and the width and height.
+*}
+function TPAContainer(const TPA: TPointArray): TCont; Inline;
+var B:TBox;
+begin
+  B := TPABounds(TPA);
+  Result.X := B.x1;
+  Result.Y := B.y1;
+  Result.W := (B.x2 - B.x1) + 1;
+  Result.H := (B.y2 - B.y1) + 1;
 end;
 
 
@@ -1398,5 +1413,52 @@ begin
   Result := ClusterTPAEx(TPA, Distance,Distance, EightWay);
 end;
 
+
+{*
+ Returns all points that are not completely surrounded. It checks the 4 neighbour points.
+ This points can easily be defined as edge-points.
+*}
+function TPAEdges(const TPA: TPointArray): TPointArray; StdCall;
+var
+  i,j,x,y,hits,H:Integer;
+  Matrix: T2DBoolArray;
+  face:TPointArray;
+  Stack: TPointStack;
+  Rect: TCont;
+  adj:TPoint;
+begin
+  H := High(TPA);
+  Rect := TPAContainer(TPA);
+  SetLength(Matrix, Rect.H, Rect.W);
+  for i:=0 to H do
+    Matrix[TPA[i].Y - Rect.Y][TPA[i].X - Rect.X] := True;
+  
+  Stack.Init;
+  SetLength(face, 4);
+  for i:=0 to H do
+  begin
+    x := TPA[i].x - Rect.X;
+    y := TPA[i].y - Rect.Y;
+    hits := 0;
+    GetAdjacent(Face, Point(x,y), False); 
+    for j:=0 to 3 do
+    begin
+      adj := Face[j];
+      if (adj.x < 0) or (adj.x >= Rect.W) or (adj.y < 0) or (adj.y >= Rect.H) then
+      begin
+        Stack.Append(TPA[i]);
+        Break;
+      end;
+      if not(Matrix[adj.y][adj.x]) then 
+      begin
+        Stack.Append(TPA[i]);
+        Break;
+      end;
+    end;
+  end;
+  
+  Result := Stack.Copy;
+  Stack.Free;
+end;
 
 end.

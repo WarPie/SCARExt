@@ -9,12 +9,10 @@ uses
   XT_Types, Math, SysUtils;
 
 
-function __Tangent(const p0:TFPoint; const p1:TFPoint; T:Extended): TFPoint; Inline;
+function __Tangent(const p0,p1:TFPoint; T:Extended): TFPoint; Inline;
 function Tangents(const Points:TFPointArray; Tension:Extended): TFPointArray; Inline;
-function Interpolate(t:Extended; const p0:TFPoint; const m0:TFPoint;
-                                 const p1:TFPoint; const m1:TFPoint): TFPoint; Inline;
-function CSPlinePoints(const p0:TFPoint; const m0:TFPoint;
-                       const p1:TFPoint; const m1:TFPoint): TFPointArray; Inline;
+function Interpolate(t:Extended; const p0,m0,p1,m1:TFPoint): TFPoint; Inline;
+function CSPlinePoints(const p0,m0,p1,m1:TFPoint): TFPointArray; Inline;
 function CSplineTFPA(const Pts:TFPointArray; Tension:Extended): TFPointArray;
 function CSpline(TPA:TPointArray; Tension:Extended; Connect:Boolean): TPointArray; StdCall;
 
@@ -25,7 +23,7 @@ uses
   XT_Points;
 
 
-function __Tangent(const p0:TFPoint; const p1:TFPoint; T:Extended): TFPoint; Inline;
+function __Tangent(const p0,p1:TFPoint; T:Extended): TFPoint; Inline;
 begin
   Result := FPoint(T * (p1.x - p0.x), T * (p1.y - p0.y)); 
 end;
@@ -51,8 +49,7 @@ begin
   Result[L-1] := __Tangent(points[L-2], points[L-1], tension);  
 end;
 
-function Interpolate(t:Extended; const p0:TFPoint; const m0:TFPoint;
-                                 const p1:TFPoint; const m1:TFPoint): TFPoint; Inline;
+function Interpolate(t:Extended; const p0,m0,p1,m1:TFPoint): TFPoint; Inline;
 var
   fa,fb,fc,fd:Extended;
 begin
@@ -65,8 +62,7 @@ begin
 end;
 
 
-function CSPlinePoints(const p0:TFPoint; const m0:TFPoint;
-                       const p1:TFPoint; const m1:TFPoint): TFPointArray; Inline;
+function CSPlinePoints(const p0,m0,p1,m1:TFPoint): TFPointArray; Inline;
 var
   L,i: Integer;
   domain, delta, t:Extended;

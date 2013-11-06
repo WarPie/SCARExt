@@ -44,6 +44,14 @@ type
   end;
   TBoxArray = Array of TBox;
 
+  TCont = Packed record
+    X: LongInt;
+    Y: LongInt;
+    W: LongInt;
+    H: LongInt;
+  end;
+  TContArray = Array of TCont;  
+  
   //
   TAlignMethod = (AM_Extremes, AM_Convex, AM_BBox);
   TThreshMethod = (TM_Mean, TM_MinMax);

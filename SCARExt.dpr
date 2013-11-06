@@ -107,6 +107,7 @@ begin
   
   
   //** Points.pas **//
+  AddCommand(@ScalePoint,      'function XT_ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint;');
   AddCommand(@SumTPA,          'function XT_SumTPA(Arr: TPointArray): TPoint;');
   AddCommand(@TPASplitAxis,    'procedure XT_TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
   AddCommand(@TPASplitAxis,    'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);'); //Alias ^
@@ -142,14 +143,23 @@ begin
   AddCommand(@FloodFillPolygon,'function XT_FloodFillPolygon(const Poly:TPointArray; EightWay:Boolean): TPointArray;');
   AddCommand(@ClusterTPAEx,    'function XT_ClusterTPAEx(const TPA: TPointArray; Distx,Disty: Integer; EightWay:Boolean): T2DPointArray;');
   AddCommand(@ClusterTPA,      'function XT_ClusterTPA(const TPA: TPointArray; Distance: Integer; EightWay:Boolean): T2DPointArray;');
-  AddCommand(@TPASkeleton,     'function XT_TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray;');
+  AddCommand(@TPAEdges,        'function XT_TPAEdges(const TPA: TPointArray): TPointArray;');
+
   
   //** CSpline.pas **//
   AddCommand(@CSpline, 'function XT_CSpline(const TPA:TPointArray; Tension:Extended; Connect:Boolean): TPointArray;');
   
+  
   //** TPAExtShape.pas **//
   AddCommand(@TPAExtractShape, 'function XT_TPAExtractShape(const PTS:TPointArray; Distance, EstimateRad:Integer): TPointArray;');
   
+  
+  //** Mophology.pas **//
+  AddCommand(@TPASkeleton, 'function XT_TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray;');
+  AddCommand(@TPAReduce,   'function XT_TPAReduce(const TPA:TPointArray; FMin,FMax, Iterations:Integer): TPointArray;');
+  AddCommand(@TPAExpand,   'function XT_TPAExpand(const TPA:TPointArray; Iterations:Integer): TPointArray;');
+
+
   
   //** Collection.pas **//
   AddCommand(@IntMatrix,       'function XT_IntMatrix(W,H, Init:Integer): T2DIntArray;');

@@ -42,8 +42,8 @@ begin
         TPS.AppendXY(X,Y);
     end;
 
+  if TPS.GetHigh=0 then Exit(False);
   TPA := TPS.Copy;
-  if Length(TPA)=0 then Exit(False);
   TPS.Free;
 end;
 
@@ -93,8 +93,8 @@ begin
     end;
 
   LABDict.Destroy;
+  if TPS.GetHigh=0 then Exit(False);
   TPA := TPS.Copy;
-  if Length(TPA)=0 then Exit(False);
   TPS.Free;
 end;
 
@@ -138,8 +138,8 @@ begin
     end;
 
   LABDict.Destroy;
+  if TPS.GetHigh=0 then Exit(False);
   TPA := TPS.Copy;
-  if Length(TPA)=0 then Exit(False);
   TPS.Free;
 end;
 

@@ -27,7 +27,7 @@ type
     (*
      Initalize with your own TPA
     *)
-    procedure InitWith(var TPA:TPointArray);
+    procedure InitWith(TPA:TPointArray);
 
     (*
      Release the array
@@ -206,7 +206,7 @@ begin
 end;
 
 
-procedure TPointStack.InitWith(var TPA:TPointArray);
+procedure TPointStack.InitWith(TPA:TPointArray);
 begin
   _Arr := TPA;
   _High := High(_Arr);
@@ -330,11 +330,18 @@ end;
 
 
 procedure TPointStack.Insert(const Item: TPoint; Index:Integer);
+var
+  i,j:Integer;
 begin
   if Index > _High then
   begin
-    _High := Index;
-    CheckResizeHigh(_High)
+    j := _high+1;
+    CheckResizeHigh(Index);
+    for i:=j to Index-1 do //Remove traces of old data..
+    begin
+      _Arr[Index].x := 0;
+      _Arr[Index].y := 0;
+    end;
   end;
   _Arr[Index] := Item;
 end;
@@ -364,8 +371,7 @@ begin
   H := Length(TPA);
   if (H = 0) then Exit;
   _h := _High + 1;
-  _High := H + _h;
-  CheckResizeHigh(_High);
+  CheckResizeHigh(H + _h);
   for i := 0 to H-1 do
     _Arr[i+_h] := TPA[i];
 end;
@@ -394,10 +400,7 @@ begin
   end;
 
   if (hit) then
-  begin
-    Dec(_High);
-    CheckResizeLow(_High);
-  end;
+    CheckResizeLow(_High - 1);
 end;
 
 
@@ -421,14 +424,13 @@ begin
     end;
   end; 
 
-  Dec(_High);
-  CheckResizeLow(_High);
+  CheckResizeLow(_High - 1);
 end;
 
 
 procedure TPointStack.DeleteEx(const Indices: TIntArray);
 var
- i,j,lo:Integer;
+ i,len,lo:Integer;
  Del:TBoolArray;
 begin
   if (_High = -1) then Exit;
@@ -441,17 +443,16 @@ begin
       if (Indices[i] < Lo) then Lo := Indices[i];
     end;
 
-  j := 0;
+  len := 0;
   for i:=Lo to _high do
     if not(Del[i]) then
     begin
-      _Arr[j] := _Arr[i];
-      Inc(j);
+      _Arr[len] := _Arr[i];
+      Inc(len);
     end;
 
-  _High := _High - (High(Indices)-j);
   SetLength(Del, 0);
-  CheckResizeLow(_High);
+  CheckResizeLow(_High - (High(Indices)-len));
 end;
 
 

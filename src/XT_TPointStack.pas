@@ -103,6 +103,12 @@ type
 
 
     (*
+     Appends the item to the last position in the array. Resizes if needed.
+    *)
+    procedure AppendXY(const X,Y: Integer); Inline;
+    
+    
+    (*
      Extend the current array with the given TPA.
     *)
     procedure Extend(const TPA: TPointArray); Inline;
@@ -339,6 +345,15 @@ begin
   Inc(_High);
   CheckResizeHigh(_High);
   _Arr[_High] := Item;
+end;
+
+
+procedure TPointStack.AppendXY(const X,Y: Integer); 
+begin
+  Inc(_High);
+  CheckResizeHigh(_High);
+  _Arr[_High].x := X;
+  _Arr[_High].y := Y;
 end;
 
 

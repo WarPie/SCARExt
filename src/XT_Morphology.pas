@@ -18,12 +18,6 @@ function TPAReduce(const TPA:TPointArray; FMin,FMax, Iterations:Integer): TPoint
 implementation
 uses XT_TPointStack;
 
-{*
- @TPASkeleton: 
- Given a set of points, this function should thin the TPA down to it's bare Skeleton.
- It also takes two modifiers which allow you to change the outcome.
- By letting eather FMin, or FMax be -1 then it will be set to it's defaults which are 2 and 6.
-*}
 
 {* __PRIVATE__ *}
 function __TransitCount(p2,p3,p4,p5,p6,p7,p8,p9:Integer): Integer; Inline;
@@ -39,6 +33,13 @@ begin
   if ((p9 = 0) and (p2 = 1)) then Inc(Result);
 end;
 
+
+{*
+ @TPASkeleton: 
+ Given a set of points, this function should thin the TPA down to it's bare Skeleton.
+ It also takes two modifiers which allow you to change the outcome.
+ By letting eather FMin, or FMax be -1 then it will be set to it's defaults which are 2 and 6.
+*}
 function TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray; StdCall;
 var
   j,i,x,y,h,transit,sumn,MarkHigh,hits: Integer;
@@ -263,11 +264,12 @@ begin
       p8 := Matrix[y][x-1];
 
       if (Iter) then begin
-        if (((p4 * p6 * p8) <> 0) or ((p2 * p4 * p6) <> 0)) then begin
+        if (p4+p6+p8=3) or (p2+p4+p6=3) then 
+        begin
           Inc(i);
           Continue;
         end;
-      end else if ((p2 * p4 * p8) <> 0) or ((p2 * p6 * p8) <> 0) then
+      end else if (p2+p4+p8=3) or  (p2+p6+p8=3) then
       begin
         Inc(i);
         Continue;

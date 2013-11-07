@@ -8,12 +8,15 @@ interface
 uses
   XT_Types, XT_Standard, Math;
 
+
 function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DIntArray; StdCall;
 function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
 function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
-function ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall;  
+function ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall;
+procedure ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMethod); StdCall;
+
 
 //--------------------------------------------------
 implementation
@@ -321,6 +324,179 @@ begin
     end;
 
   SetLength(Result, Len);
+end;
+
+
+
+//-- Image resizing ----------------------------------------------------------||
+
+(*
+ NEAREST NEIGHBOR
+*)
+function ResizeMat_NEAREST(ImgArr:T2DIntArray; NewW, NewH: Integer): T2DIntArray;
+var
+  W,H,x,y,i,j: Integer;
+  ratioX,ratioY: Single;
+begin
+  W := Length(ImgArr[0]);
+  H := Length(ImgArr);
+  ratioX := (W-1) / NewW;
+  ratioY := (H-1) / NewH;
+  SetLength(Result, NewH, NewW);
+  Dec(NewW);
+  for i:=0 to NewH-1 do 
+  for j:=0 to NewW do
+  begin
+    x := Trunc(ratioX * j);
+    y := Trunc(ratioY * i);
+    Result[i][j] := (ImgArr[y][x] and $FF) or 
+                    ((ImgArr[y][x] shr 8) and $FF) shl 8 or 
+                    ((ImgArr[y][x] shr 16) and $FF) shl 16;
+  end;
+end;
+
+
+
+
+(*
+ BILINEAR: I guess one could call the result decent.. But honestly, for
+           upscaling, I almost rather see my self scaling with NN + Blur..
+*)
+function ResizeMat_BILINEAR(ImgArr:T2DIntArray; NewW, NewH: Integer): T2DIntArray;
+var
+  W,H,x,y,p0,p1,p2,p3,i,j: Integer;
+  ratioX,ratioY,dx,dy: Single;
+  R,G,B: Single;
+begin
+  W := Length(ImgArr[0]);
+  H := Length(ImgArr);
+  ratioX := (W-1) / NewW;
+  ratioY := (H-1) / NewH;
+  SetLength(Result, NewH, NewW);
+  Dec(NewW);
+  for i:=0 to NewH-1 do 
+  for j:=0 to NewW do
+  begin
+    x := Trunc(ratioX * j);
+    y := Trunc(ratioY * i);
+    dX := ratioX * j - x;
+    dY := ratioY * i - y;
+
+    p0 := ImgArr[y][x];
+    p1 := ImgArr[y][x+1];
+    p2 := ImgArr[y+1][x];
+    p3 := ImgArr[y+1][x+1];
+
+    R := (p0 and $FF) * (1-dX) * (1-dY) +
+         (p1 and $FF) * (dX * (1-dY)) +
+         (p2 and $FF) * (dY * (1-dX)) +
+         (p3 and $FF) * (dX * dY);
+
+    G := ((p0 shr 8) and $FF) * (1-dX) * (1-dY) +
+         ((p1 shr 8) and $FF) * (dX * (1-dY)) +
+         ((p2 shr 8) and $FF) * (dY * (1-dX)) +
+         ((p3 shr 8) and $FF) * (dX * dY); 
+         
+    B := ((p0 shr 16) and $FF) * (1-dX) * (1-dY) +
+         ((p1 shr 16) and $FF) * (dX * (1-dY)) +
+         ((p2 shr 16) and $FF) * (dY * (1-dX)) +
+         ((p3 shr 16) and $FF) * (dX * dY);
+
+    Result[i][j] := Trunc(R) or Trunc(G) shl 8 or Trunc(B) shl 16;
+  end;
+end;
+
+
+
+
+//Used in bicubic interpolation.
+function _ImGetColor(ImgArr:T2DIntArray; W,H, X,Y, C:Integer): Byte; Inline;
+begin
+  Result := 0;
+  if (x > -1) and (x < W) and (y > -1) and (y < H) then
+    case C of
+      0: Result := ImgArr[y][x] and $FF;
+      1: Result := (ImgArr[y][x] shr 8) and $FF;
+      2: Result := (ImgArr[y][x] shr 16) and $FF;  
+    end; 
+end; 
+
+(*
+ BICUBIC: This got slower then expected, also worse result then expected...
+          Kinda get that it's not faster, no "deep" optimizations are used.
+*)
+function ResizeMat_BICUBIC(ImgArr:T2DIntArray; NewW, NewH: Integer): T2DIntArray;
+var
+  W,H,x,y,i,j,k,jj,yy,col: Integer;
+  a0,a1,a2,a3,d0,d2,d3:Single;
+  ratioX,ratioY,dx,dy: Single;
+  C: Array of Single;
+  Chan:TByteArray;
+begin
+  W := Length(ImgArr[0]);
+  H := Length(ImgArr);
+  ratioX := (W-1) / NewW;
+  ratioY := (H-1) / NewH;
+
+  SetLengthATIA(Result, NewH);
+  for i:=0 to NewH-1 do    
+  begin
+    SetLengthTIA(Result[i], NewW); 
+  end;
+  
+  SetLength(C, 4);
+  SetLength(Chan, 3);
+  Dec(NewH);
+  Dec(NewW);
+  
+  for i:=0 to NewH do 
+  for j:=0 to NewW do
+  begin
+    x := Trunc(ratioX * j);
+    y := Trunc(ratioY * i);
+    dX := ratioX * j - x;
+    dY := ratioY * i - y;
+    for k := 0 to 2 do
+    for jj:= 0 to 3 do
+    begin
+      yy := y - 1 + jj;
+      a0 := _ImGetColor(ImgArr, W, H, x+0, yy, k);
+      d0 := _ImGetColor(ImgArr, W, H, x-1, yy, k) - a0;
+      d2 := _ImGetColor(ImgArr, W, H, x+1, yy, k) - a0;
+      d3 := _ImGetColor(ImgArr, W, H, x+2, yy, k) - a0;
+      a1 := (-1.0 / 3 * d0 + d2 - 1.0 / 6 * d3);
+      a2 := (1.0 / 2 * d0 + 1.0 / 2 * d2);
+      a3 := (-1.0 / 6 * d0 - 1.0 / 2 * d2 + 1.0 / 6 * d3);
+      C[jj] := (a0 + a1 * dx + a2 * dx * dx + a3 * dx * dx * dx);
+
+      d0 := C[0] - C[1];
+      d2 := C[2] - C[1];
+      d3 := C[3] - C[1];
+      a1 := (-1.0 / 3 * d0 + d2 -1.0 / 6 * d3);
+      a2 := (1.0 / 2 * d0 + 1.0 / 2 * d2);
+      a3 := (-1.0 / 6 * d0 - 1.0 / 2 * d2 + 1.0 / 6 * d3);
+      Col := Trunc(C[1] + a1 * dy + a2 * dy * dy + a3 * dy * dy * dy);
+      if (Col>255) then Col := 255
+      else if (Col<0) then Col := 0;
+      Chan[k] := Col;
+    end;
+    
+    Result[i][j] := (Chan[0]) or (Chan[1] shl 8) or (Chan[2] shl 16);
+  end;
+end;
+
+
+(*
+ Resize a matrix/ImArray
+ @Methods: RM_NEAREST, RM_BILINEAR and RM_BICUBIC.
+*)
+procedure ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMethod); StdCall;
+begin
+  case Method of
+    RM_NEAREST: ImgArr := ResizeMat_NEAREST(ImgArr, NewW, NewH);
+    RM_BILINEAR:ImgArr := ResizeMat_BILINEAR(ImgArr, NewW, NewH);
+    RM_BICUBIC: ImgArr := ResizeMat_BICUBIC(ImgArr, NewW, NewH);
+  end;
 end;
 
 end.

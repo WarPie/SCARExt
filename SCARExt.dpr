@@ -159,7 +159,6 @@ begin
   AddCommand(@TPAReduce,   'function XT_TPAReduce(const TPA:TPointArray; FMin,FMax, Iterations:Integer): TPointArray;');
   AddCommand(@TPAExpand,   'function XT_TPAExpand(const TPA:TPointArray; Iterations:Integer): TPointArray;');
 
-
   
   //** Collection.pas **//
   AddCommand(@IntMatrix,       'function XT_IntMatrix(W,H, Init:Integer): T2DIntArray;');
@@ -182,7 +181,8 @@ begin
   AddCommand(@MatGetCols,    'function XT_MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray;');
   AddCommand(@MatGetRows,    'function XT_MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray;');
   AddCommand(@MatGetBox,     'function XT_MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray;');
-  
+
+
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
   AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');
@@ -190,7 +190,8 @@ begin
   AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray;');
   AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray;');
   AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
-  
+  AddCommand(@ImResize,       'procedure XT_ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMethod);');
+
   
   //** Randomize.pas **//
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
@@ -242,7 +243,7 @@ end;
 
 function GetTypeCount: Integer; StdCall;
 begin
-  Result := 3;
+  Result := 4;
 end;
 
 function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
@@ -257,8 +258,12 @@ begin
         sTypeDef := '(TM_Mean, TM_MinMax);';
       end;
     2:begin
-      sType := 'TCenterMethod';
-      sTypeDef := '(CM_Bounds, CM_BBox, CM_Mean, CM_Median);';
+        sType := 'TCenterMethod';
+        sTypeDef := '(CM_Bounds, CM_BBox, CM_Mean, CM_Median);';
+      end;
+    3:begin
+        sType := 'TResizeMethod';
+        sTypeDef := '(RM_Nearest, RM_Bilinear, RM_Bicubic);';
       end;
   else
     x := -1;

@@ -11,7 +11,7 @@ uses
   SysUtils;
 
 type
-  TPoint = Packed record X,Y: LongInt; end;
+  TPoint = packed record X,Y: LongInt; end;
   TPointArray = array of TPoint;
   T2DPointArray = array of TPointArray;
   T3DPointArray = array of T2DPointArray;
@@ -36,21 +36,21 @@ type
   T3DExtArray = array of T2DExtArray;
   
   (* TBox is not SCAR compatible - Don't export functions that returns this *)
-  TBox = Packed record
+  TBox = packed record
     X1: LongInt;
     Y1: LongInt;
     X2: LongInt;
     Y2: LongInt;
+  private
+    function GetWidth: Integer;
+    function GetHeight: Integer;
+  public
+    property Width: Integer read GetWidth;
+    property Height: Integer read GetHeight;
+    function Center: TPoint;
+    procedure Expand(const SizeChange: Integer);
   end;
   TBoxArray = Array of TBox;
-
-  TCont = Packed record
-    X: LongInt;
-    Y: LongInt;
-    W: LongInt;
-    H: LongInt;
-  end;
-  TContArray = Array of TCont;  
   
   //
   TAlignMethod = (AM_Extremes, AM_Convex, AM_BBox);
@@ -68,6 +68,29 @@ function TPAToTFPA(TPA:TPointArray): TFPointArray;
 //-----------------------------------------------------------------------
 implementation
 
+function TBox.GetWidth: Integer;
+begin 
+  Result := (X2-X1+1); 
+end;
+
+function TBox.GetHeight: Integer;
+begin 
+  Result := (Y2-Y1+1); 
+end;
+
+function TBox.Center: TPoint;
+begin
+  Result.X := Self.X1 + (GetWidth div 2);
+  Result.Y := Self.Y1 + (GetHeight div 2);
+end;
+
+procedure TBox.Expand(const SizeChange: Integer);
+begin
+  Self.X1 := Self.X1 - SizeChange;
+  Self.Y1 := Self.Y1 - SizeChange;
+  Self.X2 := Self.X2 + SizeChange;
+  Self.Y2 := Self.Y2 + SizeChange;
+end;
 
 function Box(const X1,Y1,X2,Y2:Integer): TBox; Inline;
 begin

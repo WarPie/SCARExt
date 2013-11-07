@@ -17,7 +17,6 @@ function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
 procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
 function TPAMax(const TPA: TPointArray): TPoint;
 function TPABounds(const TPA: TPointArray): TBox; Inline;
-function TPAContainer(const TPA: TPointArray): TCont; Inline;
 function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint; StdCall;
 function TPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
 function TPABBox(const TPA:TPointArray): TPointArray; StdCall;
@@ -199,20 +198,6 @@ begin
     else if TPA[i].y < Result.y1 then
       Result.y1 := TPA[i].y;
   end;
-end;
-
-
-{*
- Return the smallest numbers for x, and y-axis in TPA, and the width and height.
-*}
-function TPAContainer(const TPA: TPointArray): TCont; Inline;
-var B:TBox;
-begin
-  B := TPABounds(TPA);
-  Result.X := B.x1;
-  Result.Y := B.y1;
-  Result.W := (B.x2 - B.x1) + 1;
-  Result.H := (B.y2 - B.y1) + 1;
 end;
 
 
@@ -1424,32 +1409,32 @@ var
   Matrix: T2DBoolArray;
   face:TPointArray;
   Stack: TPointStack;
-  Rect: TCont;
   adj:TPoint;
+  Area: TBox;
 begin
   H := High(TPA);
-  Rect := TPAContainer(TPA);
-  SetLength(Matrix, Rect.H, Rect.W);
+  Area := TPABounds(TPA);
+  SetLength(Matrix, Area.Height, Area.Width);
   for i:=0 to H do
-    Matrix[TPA[i].Y - Rect.Y][TPA[i].X - Rect.X] := True;
+    Matrix[TPA[i].Y - Area.Y1][TPA[i].X - Area.X1] := True;
   
   Stack.Init;
   SetLength(face, 4);
   for i:=0 to H do
   begin
-    x := TPA[i].x - Rect.X;
-    y := TPA[i].y - Rect.Y;
+    x := TPA[i].x - Area.X1;
+    y := TPA[i].y - Area.Y1;
     hits := 0;
     GetAdjacent(Face, Point(x,y), False); 
     for j:=0 to 3 do
     begin
       adj := Face[j];
-      if (adj.x < 0) or (adj.x >= Rect.W) or (adj.y < 0) or (adj.y >= Rect.H) then
+      if (adj.x < 0) or (adj.x >= Area.Width) or (adj.y < 0) or (adj.y >= Area.Height) then
       begin
         Stack.Append(TPA[i]);
         Break;
-      end;
-      if not(Matrix[adj.y][adj.x]) then 
+      end
+      else if not(Matrix[adj.y][adj.x]) then
       begin
         Stack.Append(TPA[i]);
         Break;

@@ -23,12 +23,11 @@ function ATIAToStr(ATIA: T2DIntArray): String;
 var
   i: Integer;
 begin
-  Result := '[';
+  Result := '['#13;
   for i:=0 to High(ATIA) do begin
-    Result := Result + '('+ TIAToStr(ATIA[i]) + ')';
-    if i < High(ATIA) then Result := Result + ', ';
+    Result := Result + '['+ TIAToStr(ATIA[i]) + ']'#13;
   end;
-  Result := Result + ']'
+  Result := Result +']'#13;
 end;  
   
 {*

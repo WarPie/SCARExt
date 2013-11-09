@@ -81,7 +81,6 @@ begin
   AddCommand(@TEACombinations, 'function XT_TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray;');
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
   AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
-  AddCommand(@TIAsToTPA, 'procedure XT_TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
   AddCommand(@TIAToMat, 'function XT_TIAToMat(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
 
 
@@ -110,7 +109,7 @@ begin
   AddCommand(@ScalePoint,      'function XT_ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint;');
   AddCommand(@SumTPA,          'function XT_SumTPA(Arr: TPointArray): TPoint;');
   AddCommand(@TPASplitAxis,    'procedure XT_TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
-  AddCommand(@TPASplitAxis,    'procedure XT_TPASeparateAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);'); //Alias ^
+  AddCommand(@TPAJoinAxis,     'procedure XT_TPAJoinAxis(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
   AddCommand(@TPAExtract,      'procedure XT_TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const TopLeft:TPoint);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
   AddCommand(@TPAExtremes,     'function XT_TPAExtremes(const TPA:TPointArray): TPointArray;');
@@ -180,8 +179,8 @@ begin
   AddCommand(@MatGetRow,     'function XT_MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray;');
   AddCommand(@MatGetCols,    'function XT_MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray;');
   AddCommand(@MatGetRows,    'function XT_MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray;');
-  AddCommand(@MatGetBox,     'function XT_MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray;');
-
+  AddCommand(@MatGetArea,    'function XT_MatGetArea(const Mat:T2DIntArray; X1,Y1,X2,Y2:Integer): T2DIntArray;');
+  AddCommand(@PadMatrix,     'procedure XT_PadMatrix(var Matrix:T2DIntArray; HPad,WPad:Integer);');
 
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');

@@ -180,7 +180,6 @@ begin
   while Y <= Plot.H do
   begin                                                     
     py := Plot.H - Floor(Y) + Plot.YPad;
-    //TPA := TPAFromText(IntToStr(YMin + Round(i * yjump)), TPlotFont, Point(px, py - TPlotFontSize shr 1));
     TPA := TPlotText(Plot, IntToStr(YMin + Round(i * yjump)), Point(px, py - TPlotFontSize shr 1));
     color := $AAAA00;
     if (i mod 2 = 0) then color := $00AA00; 

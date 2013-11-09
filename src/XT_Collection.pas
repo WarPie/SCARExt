@@ -28,7 +28,8 @@ function MatGetCol(const Mat:T2DIntArray; Column:Integer): TIntArray; StdCall;
 function MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray; StdCall;
 function MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray; StdCall;
 function MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray; StdCall;
-function MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
+function MatGetArea(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
+procedure PadMatrix(var Matrix:T2DIntArray; HPad, WPad:Integer); StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
 
 
@@ -374,7 +375,7 @@ end;
 {*
   Returns the matrix containing all the values in the given box.
 *}
-function MatGetBox(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
+function MatGetArea(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
 var
   x,y,W,H:Integer;
 begin
@@ -386,6 +387,28 @@ begin
   for x:=x1 to x2 do
     for y:=y1 to y2 do
       Result[y][x] := Mat[y][x];
+end;
+
+
+{*
+  Pads the matrix with zeroes from all sides.
+*}
+procedure PadMatrix(var Matrix:T2DIntArray; HPad, WPad:Integer); StdCall;
+var 
+  x,y,oldw,oldh,w,h:Integer;
+  Temp:T2DIntArray;
+begin
+  OldW := Length(Matrix[0]);
+  OldH := Length(Matrix);
+  H := HPad+OldH+HPad;
+  W := WPad+OldW+WPad;
+  SetLength(Temp, H, W);  
+  for y:=0 to OldH-1 do
+    for x:=0 to OldW-1 do
+      Temp[y+HPad][x+WPad] := Matrix[y][x];
+  
+  SetLength(Matrix, 0);
+  Matrix := Temp;
 end;
 
 

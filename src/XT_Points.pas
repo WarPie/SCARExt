@@ -15,6 +15,7 @@ procedure RotatingAdjecent(var Adj:TPointArray;const Curr:TPoint; const Prev:TPo
 function ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint; Inline; StdCall;
 function SumTPA(Arr: TPointArray): TPoint; Inline; StdCall;
 procedure TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray); StdCall;
+procedure TPAJoinAxis(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
 function TPAMax(const TPA: TPointArray): TPoint;
 function TPABounds(const TPA: TPointArray): TBox; Inline;
 function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean): TPoint; StdCall;
@@ -149,6 +150,19 @@ begin
     X[i] := TPA[i].x;
     Y[i] := TPA[i].y;
   end;
+end;
+
+
+{*
+  Given two TIAs this function will join them in to one TPA.
+*}
+procedure TPAJoinAxis(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
+var i,H:Integer;
+begin
+  H := Min(High(X), High(Y));
+  SetLength(TPA, H+1);
+  for i:=0 to H do
+    TPA[i] := Point(X[i], Y[i]);
 end;
 
 

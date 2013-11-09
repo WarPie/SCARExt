@@ -14,7 +14,6 @@ function TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray; StdCal
 function TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray; StdCall;
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
-procedure TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
 function TIAToMat(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 
 
@@ -152,19 +151,6 @@ begin
     else if Arr[i] > Max then
       Max := Arr[i];
   end;
-end;
-
-
-{*
-  Given two TIAs this function will join them in to one TPA.
-*}
-procedure TIAsToTPA(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray); StdCall;
-var i,H:Integer;
-begin
-  H := Min(High(X), High(Y));
-  SetLength(TPA, H+1);
-  for i:=0 to H do
-    TPA[i] := Point(X[i], Y[i]);
 end;
 
 

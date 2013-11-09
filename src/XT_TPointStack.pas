@@ -15,10 +15,12 @@ const
 type
   TPointStack = record
   private
-    _Arr: TPointArray;
     _High: Integer;
     _Length: Integer;
   public
+    (* Container *)
+    _Arr: TPointArray;
+    
     (*
      Initalize
     *)
@@ -147,6 +149,12 @@ type
     *)
     function Get(Index:Integer): TPoint; Inline;
 
+    
+    (*
+     Set the value of the given Index.
+    *)
+    procedure Put(Index:Integer; const Item: TPoint); Inline;
+    
     
     (*
      Swaps to items of specified indexes. 
@@ -298,7 +306,7 @@ function TPointStack.Copy: TPointArray;
 var i:Integer;
 begin
   SetLength(Result, _High+1);
-  //Move(_Arr[0], Result[0], _High * SizeOf(TPoint)); //Not working ^__-
+  //Move(_Arr[0], Result[0], _High * SizeOf(TPoint));
   for i := 0 to _High do   //Hard copy.
     Result[i] := _Arr[i];
 end;
@@ -306,14 +314,12 @@ end;
 
 function TPointStack.Peek: TPoint;
 begin
-  if (_High = -1) then Exit(Point(-1,-1));
   Result := _Arr[_High];
 end;
 
 
 function TPointStack.Pop: TPoint;
 begin
-  if (_High = -1) then Exit(Point(-1,-1));
   Result := _Arr[_High];
   Dec(_High);
   CheckResizeLow(_High);
@@ -322,7 +328,6 @@ end;
 
 function TPointStack.FastPop: TPoint;
 begin
-  if (_High = -1) then Exit(Point(-1,-1));
   Result := _Arr[_High];
   Dec(_High);
 end;
@@ -330,19 +335,16 @@ end;
 
 
 procedure TPointStack.Insert(const Item: TPoint; Index:Integer);
-var
-  i,j:Integer;
+var i:Integer;
 begin
-  if Index > _High then
+  CheckResizeHigh(_high+1);
+  if Index > _High then //Remove old crap.. and resize
   begin
-    j := _high+1;
+    SetLength(_Arr, _high); 
     CheckResizeHigh(Index);
-    for i:=j to Index-1 do //Remove traces of old data..
-    begin
-      _Arr[Index].x := 0;
-      _Arr[Index].y := 0;
-    end;
   end;
+  for i:=_high-1 downto Index do
+    _Arr[i+1] := _Arr[i];
   _Arr[Index] := Item;
 end;
 
@@ -487,6 +489,11 @@ begin
   Result := _Arr[Index];
 end;
 
+
+procedure TPointStack.Put(Index:Integer; const Item: TPoint);
+begin
+  _Arr[Index] := Item;
+end;
 
 
 procedure TPointStack.Swap(Index1, Index2: Integer);

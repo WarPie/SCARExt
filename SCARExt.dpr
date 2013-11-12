@@ -12,7 +12,7 @@ uses
 
   XT_Types,
   XT_Standard,
-  XT_TPointStack,
+  XT_TPointList,
   XT_Sorting,
   XT_Math,
   XT_Collection,

@@ -55,7 +55,7 @@ function TPAEdges(const TPA: TPointArray): TPointArray; StdCall;
 implementation
 
 uses 
-  XT_CSpline, XT_Collection, XT_Sorting, XT_TPointStack;
+  XT_CSpline, XT_Collection, XT_Sorting, XT_TPointList;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -870,7 +870,7 @@ end;
 procedure TPAEllipse(var TPA:TPointArray; const Center: TPoint; RadX,RadY:Integer); StdCall;
 var
   RadXSQ,RadYSQ,TwoSQX,TwoSQY,p,x,y,px,py,H:Integer;
-  Stack: TPointStack;
+  Stack: TPointList;
 begin
   RadXSQ := Sqr(RadX);
   RadYSQ := Sqr(RadY);
@@ -1041,7 +1041,7 @@ var
   face:TPointArray;
   Matrix:T2DBoolArray;
   Area: TBox;
-  Queue: TPointStack;
+  Queue: TPointList;
 begin
   Area := TPABounds(TPA);
   Area.x2 := (Area.x2 - Area.x1) + 1;
@@ -1108,7 +1108,7 @@ var
   adj: TPointArray;
   start,prev,endpt:TPoint;
   Area: TBox;
-  Stack: TPointStack;
+  Stack: TPointList;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1179,7 +1179,7 @@ var
   start,prev,endpt:TPoint;
   Area: TBox;
   isset:Boolean;
-  Stack: TPointStack;
+  Stack: TPointList;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1274,7 +1274,7 @@ var
   Area:TBox;
   Matrix,Table:T2DIntArray;
   face:TPointArray;
-  Queue: TPointStack;
+  Queue: TPointList;
   pt,adj,testpt:TPoint;
 begin
   Area := TPABounds(TPA);
@@ -1422,7 +1422,7 @@ var
   i,j,x,y,hits,H:Integer;
   Matrix: T2DBoolArray;
   face:TPointArray;
-  Stack: TPointStack;
+  Stack: TPointList;
   adj:TPoint;
   Area: TBox;
 begin

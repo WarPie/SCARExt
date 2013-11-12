@@ -18,7 +18,7 @@ function ImFindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Colo
 implementation
 
 uses
-  XT_HashTable, XT_ColorMath, XT_Math, XT_TPointStack;
+  XT_HashTable, XT_ColorMath, XT_Math, XT_TPointList;
 
   
 // Find multiple matches of specified color.
@@ -26,7 +26,7 @@ function ImFindColorTolEx(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, 
 var
   W,H,X,Y:Integer;
   R,G,B,R1,G1,B1:Byte;
-  TPS: TPointStack;
+  TPS: TPointList;
 begin
   Result := True;
   W := High(ImgArr[0]);
@@ -55,7 +55,7 @@ var
   L,C,HH, C1,H1, DeltaHue,FF,EE,DD:Single;
   LAB: ColorLAB;
   LABDict: ColorDict;
-  TPS: TPointStack;
+  TPS: TPointList;
 begin
   Result := True;
 
@@ -106,7 +106,7 @@ var
   L,A,B,FF,EE,DD:Single;
   LAB: ColorLAB;
   LABDict: ColorDict;
-  TPS: TPointStack;
+  TPS: TPointList;
 begin
   Result := True;
 

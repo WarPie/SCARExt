@@ -16,7 +16,7 @@ function TPAReduce(const TPA:TPointArray; FMin,FMax, Iterations:Integer): TPoint
 
 //--------------------------------------------------
 implementation
-uses XT_TPointStack;
+uses XT_TPointList;
 
 
 {* __PRIVATE__ *}
@@ -137,7 +137,7 @@ function TPAExpand(const TPA:TPointArray; Iterations:Integer): TPointArray; StdC
 var
   H,i,j: Integer;
   Matrix: T2DBoolArray;
-  QueueA, QueueB: TPointStack;
+  QueueA, QueueB: TPointList;
   face:TPointArray;
   pt:TPoint;
   B: TBox;
@@ -155,7 +155,7 @@ begin
 
   SetLength(face,4);
   QueueA.InitWith(TPAEdges(TPA));
-  QueueA.Move(-B.X1,-B.Y1);
+  QueueA.Offset(-B.X1,-B.Y1);
   QueueB.Init;
   j := 0;
   repeat

@@ -55,7 +55,7 @@ function TPAEdges(const TPA: TPointArray): TPointArray; StdCall;
 implementation
 
 uses 
-  XT_CSpline, XT_Collection, XT_Sorting, XT_TPointList;
+  XT_CSpline, XT_Matrix, XT_Sorting, XT_TPointList;
 
 {*
  Compares two TPoints, to se if they are the same or not.
@@ -924,7 +924,7 @@ begin
     Stack.Append(Point(Center.x + x, Center.y - y));
     Stack.Append(Point(Center.x - x, Center.y - y));
   end;
-  TPA := Stack.Copy;
+  TPA := Stack.Clone;
   Stack.Free;
 end;
 
@@ -1090,6 +1090,7 @@ begin
   SetLength(Result, I);
 end;
 
+
 function FloodFillTPA(const TPA:TPointArray; const Start:TPoint; EightWay:Boolean): TPointArray; StdCall;
 begin
   if High(TPA) < 0 then Exit;
@@ -1108,7 +1109,7 @@ var
   adj: TPointArray;
   start,prev,endpt:TPoint;
   Area: TBox;
-  Stack: TPointList;
+  List: TPointList;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1131,8 +1132,8 @@ begin
   endpt := start;
   prev := Point(start.x, start.y-1);
   hit := 0;
-  Stack.Init;
-  Stack.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
+  List.Init;
+  List.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
   SetLength(adj, 8);
   for i:=0 to H do
   begin
@@ -1152,15 +1153,15 @@ begin
           start := adj[j];
           if Matrix[y][x]=1 then
           begin
-            Stack.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
+            List.Append(Point((Start.x+Area.x1), (Start.y+Area.y1)));
             Matrix[y][x] := 2;
           end;
           break;
         end;
     end;
   end;
-  Result := Stack.Copy;
-  Stack.Free;
+  Result := List.Clone;
+  List.Free;
   SetLength(Adj, 0);
   SetLength(Matrix, 0);
 end;
@@ -1179,7 +1180,7 @@ var
   start,prev,endpt:TPoint;
   Area: TBox;
   isset:Boolean;
-  Stack: TPointList;
+  List: TPointList;
 begin
   H := High(TPA);
   Area := TPABounds(TPA);
@@ -1212,7 +1213,7 @@ begin
   endpt := Start;
   prev := Point(start.x, start.y-1);
   hit := 0;
-  Stack.Init;
+  List.Init;
 
   SetLength(adj, 8);
   for i:=0 to H do
@@ -1230,7 +1231,7 @@ begin
         if Matrix[y][x] <= 0 then begin
           if Matrix[y][x] = 0 then
           begin
-            Stack.Append(Point((adj[j].x+Area.x1), (adj[j].y+Area.y1)));
+            List.Append(Point((adj[j].x+Area.x1), (adj[j].y+Area.y1)));
             Dec(Matrix[y][x]);
           end;
         end else if Matrix[y][x] >= 1 then
@@ -1241,8 +1242,8 @@ begin
         end;
     end;
   end;
-  Result := Stack.Copy;
-  Stack.Free;
+  Result := List.Clone;
+  List.Free;
   SetLength(Adj, 0);
   SetLength(Matrix, 0);
 end;
@@ -1419,10 +1420,10 @@ end;
 *}
 function TPAEdges(const TPA: TPointArray): TPointArray; StdCall;
 var
-  i,j,x,y,hits,H:Integer;
+  i,j,x,y,H:Integer;
   Matrix: T2DBoolArray;
   face:TPointArray;
-  Stack: TPointList;
+  List: TPointList;
   adj:TPoint;
   Area: TBox;
 begin
@@ -1432,32 +1433,31 @@ begin
   for i:=0 to H do
     Matrix[TPA[i].Y - Area.Y1][TPA[i].X - Area.X1] := True;
   
-  Stack.Init;
+  List.Init;
   SetLength(face, 4);
   for i:=0 to H do
   begin
     x := TPA[i].x - Area.X1;
     y := TPA[i].y - Area.Y1;
-    hits := 0;
     GetAdjacent(Face, Point(x,y), False); 
     for j:=0 to 3 do
     begin
       adj := Face[j];
       if (adj.x < 0) or (adj.x >= Area.Width) or (adj.y < 0) or (adj.y >= Area.Height) then
       begin
-        Stack.Append(TPA[i]);
+        List.Append(TPA[i]);
         Break;
       end
       else if not(Matrix[adj.y][adj.x]) then
       begin
-        Stack.Append(TPA[i]);
+        List.Append(TPA[i]);
         Break;
       end;
     end;
   end;
   
-  Result := Stack.Copy;
-  Stack.Free;
+  Result := List.Clone;
+  List.Free;
 end;
 
 end.

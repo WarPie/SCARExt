@@ -14,7 +14,6 @@ function TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray; StdCal
 function TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray; StdCall;
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
-function TIAToMat(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 
 
 //--------------------------------------------------
@@ -152,48 +151,6 @@ begin
       Max := Arr[i];
   end;
 end;
-
-
-{*
-  ...
-*}
-function TIAToMat(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
-var x,y,i:Integer;
-begin
-  SetLength(Result, Height,Width);
-  i := 0;
-  for y:=0 to Height-1 do
-    for x:=0 to Width-1 do
-    begin
-      Result[y][x] := TIA[i];
-      Inc(i);
-    end;
-end;
-
-{
-function TIADistribution(TIA:TIntArray; Percent:Integer): TIntArray; StdCall;
-var
-  Dst,r,c,i,j,h,d:Integer;
-begin
-  H := High(TIA);
-  Dst := Max(1, Round(H * (Percent/100))); 
-  D := (H div Dst)-1;
-  SetLength(Result, D+1);
-  c := 0;
-  for i:=0 to D do
-  begin
-    R := 0;
-    for j:=0 to Dst do
-    begin
-      R := R + TIA[c+j];
-    end;
-    c := c + Dst; 
-    Result[i] := R; 
-  end;
-  SetLength(Result, i);
-end;
-
-}
 
 
 end.

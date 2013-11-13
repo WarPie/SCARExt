@@ -15,7 +15,7 @@ uses
   XT_TPointList,
   XT_Sorting,
   XT_Math,
-  XT_Collection,
+  XT_Matrix,
   XT_ColorMath,
   XT_HashTable,
   XT_Numeric,
@@ -81,7 +81,6 @@ begin
   AddCommand(@TEACombinations, 'function XT_TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray;');
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
   AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
-  AddCommand(@TIAToMat, 'function XT_TIAToMat(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
 
 
   //** Sorting.pas **//
@@ -159,7 +158,7 @@ begin
   AddCommand(@TPAExpand,   'function XT_TPAExpand(const TPA:TPointArray; Iterations:Integer): TPointArray;');
 
   
-  //** Collection.pas **//
+  //** Matrix.pas **//
   AddCommand(@IntMatrix,       'function XT_IntMatrix(W,H, Init:Integer): T2DIntArray;');
   AddCommand(@IntMatrixNil,    'function XT_IntMatrixNil(W,H:Integer): T2DIntArray;');
   AddCommand(@IntMatrixSetPts, 'procedure XT_IntMatrixSetPts(var Matrix:T2DIntArray; const Pts:TPointArray; Value:Integer; const Align:TPoint);');
@@ -180,8 +179,10 @@ begin
   AddCommand(@MatGetCols,    'function XT_MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray;');
   AddCommand(@MatGetRows,    'function XT_MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray;');
   AddCommand(@MatGetArea,    'function XT_MatGetArea(const Mat:T2DIntArray; X1,Y1,X2,Y2:Integer): T2DIntArray;');
+  AddCommand(@MatFromTIA,    'function XT_MatFromTIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
   AddCommand(@PadMatrix,     'procedure XT_PadMatrix(var Matrix:T2DIntArray; HPad,WPad:Integer);');
 
+  
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
   AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');

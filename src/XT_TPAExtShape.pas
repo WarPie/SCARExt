@@ -16,7 +16,7 @@ function TPAExtractShape(const PTS:TPointArray; Distance, EstimateRad:Integer): 
 implementation
 
 uses 
-  XT_Points, XT_Collection;
+  XT_Points, XT_Matrix;
   
 {*
  Used to create an estimate of points which we will draw lines trough.

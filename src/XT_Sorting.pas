@@ -5,17 +5,17 @@ unit XT_Sorting;
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 (*
- My own (fast) sorting algorithm (FastSort) based on Quicksort, and InsertionSort.
+ My (fast) sorting algorithm (FastSort) based on Quicksort, and InsertionSort.
  > The closer the array is to beeing already sorted, the faster it gets.
  > Does not matter much if the array is reversed or not.
- > Fallback to ShellSort to avoid worst-case scenario.
+ > Fallback to ShellSort to avoid a bad worst-case scenario.
 
  How does it work?
  1. Based on a sligtly modified Quicksort.
  2. Recursively partitions the array at the middle (See step 4)...
  3. If the partition Left to Right is less then a cirtain criteria InsertionSort is used.
  
- .If not insertion:
+ > If not insertion:
  4. Pivot is selected as a Median of 5: Left - MidLeft - Mid - MidRight - Right.
 
  5. If all items from "Left up to pivot" and "Right down to pivot" is (close to) sorted
@@ -263,10 +263,12 @@ begin
 end;
 
 procedure SortTIA(var Arr: TIntArray); StdCall;
-var limit: Integer;
+var limit,hi: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
-  __SortTIA(Arr, Low(Arr), High(Arr), Limit);
+  Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5 * ln(Hi + 1) / ln(2));
+  __SortTIA(Arr, Low(Arr), Hi, Limit);
 end;
 
 
@@ -319,10 +321,12 @@ end;
 
 
 procedure SortTEA(var Arr: TExtArray); StdCall;
-var limit: Integer;
+var limit,hi: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
-  __SortTEA(Arr, Low(Arr), High(Arr), Limit);
+  Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5 * ln(Hi + 1) / ln(2));
+  __SortTEA(Arr, Low(Arr), Hi, Limit);
 end;
 
 
@@ -383,8 +387,9 @@ var
   Weight:TIntArray;
   limit: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
   Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5 * ln(Hi+1) / ln(2));
   SetLength(Weight, Hi+1);
   for i := 0 to Hi do
     Weight[i] := Sqr(Arr[i].x) + Sqr(Arr[i].y);
@@ -400,8 +405,9 @@ var
   Weight:TIntArray;
   limit: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
   Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5 * ln(Hi + 1) / ln(2));
   SetLength(Weight, Hi+1);
   for i := 0 to Hi do
     Weight[i] := Sqr(From.x-Arr[i].x) + Sqr(From.y-Arr[i].y);
@@ -418,10 +424,11 @@ var
   Area : TBox;
   limit: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
+  Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5*ln(Hi + 1) / ln(2));
   Area := TPABounds(Arr);
   W := Area.X2-Area.X1+1;
-  Hi := High(Arr);
   SetLength(Weight, Hi+1);
   for i := 0 to Hi do
     Weight[i] := Arr[i].y * W + Arr[i].x;
@@ -438,10 +445,11 @@ var
   Area : TBox;
   limit: Integer;
 begin
-  Limit := Round(2.5*ln(Length(Arr))/ln(2));
+  Hi := High(Arr);
+  if Hi < 0 then Exit;
+  Limit := Round(2.5 * ln(Hi + 1) / ln(2));
   Area := TPABounds(Arr);
   H := Area.Y2-Area.Y1+1;
-  Hi := High(Arr);
   SetLength(Weight, Hi+1);
   for i := 0 to Hi do
     Weight[i] := Arr[i].x * H + Arr[i].y;

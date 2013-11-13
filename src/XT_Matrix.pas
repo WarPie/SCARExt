@@ -1,4 +1,4 @@
-Unit XT_Collection;
+Unit XT_Matrix;
 {=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=]
  Copyright (c) 2013, Jarl K. <Slacky> Holta || http://github.com/WarPie
  All rights reserved.
@@ -9,7 +9,7 @@ interface
 uses
   XT_Types, Math;
 
-
+//General ----------->
 function IntMatrix(W,H,Init:Integer): T2DIntArray; StdCall;
 function IntMatrixNil(W,H:Integer): T2DIntArray; StdCall;
 function TPAToIntMatrix(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray; StdCall;
@@ -19,7 +19,8 @@ function BoolMatrix(W,H:Integer;Init:Boolean): T2DBoolArray; StdCall;
 function BoolMatrixNil(W,H:Integer): T2DBoolArray; StdCall;
 function TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
 function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
-//Other----------->
+
+//Other ----------->
 procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
 function NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 procedure MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer); StdCall;
@@ -29,6 +30,7 @@ function MatGetRow(const Mat:T2DIntArray; Row:Integer): TIntArray; StdCall;
 function MatGetCols(const Mat:T2DIntArray; FromCol, ToCol:Integer): T2DIntArray; StdCall;
 function MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray; StdCall;
 function MatGetArea(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
+function MatFromTIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 procedure PadMatrix(var Matrix:T2DIntArray; HPad, WPad:Integer); StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
 
@@ -387,6 +389,23 @@ begin
   for x:=x1 to x2 do
     for y:=y1 to y2 do
       Result[y][x] := Mat[y][x];
+end;
+
+
+{*
+  ...
+*}
+function MatFromTIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
+var x,y,i:Integer;
+begin
+  SetLength(Result, Height,Width);
+  i := 0;
+  for y:=0 to Height-1 do
+    for x:=0 to Width-1 do
+    begin
+      Result[y][x] := TIA[i];
+      Inc(i);
+    end;
 end;
 
 

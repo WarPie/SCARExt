@@ -43,7 +43,7 @@ begin
     end;
 
   if TPS.GetHigh=0 then Exit(False);
-  TPA := TPS.Copy;
+  TPA := TPS.Clone;
   TPS.Free;
 end;
 
@@ -94,7 +94,7 @@ begin
 
   LABDict.Destroy;
   if TPS.GetHigh=0 then Exit(False);
-  TPA := TPS.Copy;
+  TPA := TPS.Clone;
   TPS.Free;
 end;
 
@@ -139,7 +139,7 @@ begin
 
   LABDict.Destroy;
   if TPS.GetHigh=0 then Exit(False);
-  TPA := TPS.Copy;
+  TPA := TPS.Clone;
   TPS.Free;
 end;
 

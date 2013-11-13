@@ -12,7 +12,7 @@ Unit XT_TPointList;
 interface
 
 uses
-  XT_Types;
+  XT_Types, Math;
 
 const
   LMINSIZE = 1024;
@@ -22,10 +22,10 @@ type
   private
     _High: Integer;
     _Length: Integer;
-  public
-    (* Container *)
     _Arr: TPointArray;
-    
+    function Get(Index:Integer): TPoint; Inline;
+    procedure Put(Index:Integer; const Value: TPoint); Inline;
+  public
     (*
      Initalize
     *)
@@ -43,12 +43,17 @@ type
     *)
     procedure Free;
 
-
+    
+    (*
+     Indexing the array.
+    *)
+    property Point[Index : Integer]: TPoint read Get write Put;
+    
+    
     (*
      Same as initlaize, tho the pourpose is not the same.
     *)
     procedure Reset; Inline;
-
 
     (*
      Check if we can give it a new size.. It's manly used internally, but can be used elsewere..
@@ -68,18 +73,19 @@ type
     *)
     procedure CheckResizeLow(NewSize:Integer); Inline;
 
-    (*
-     Returns the TPA/Array.
-    *)
-    function GetData: TPointArray; Inline;
-
     
     (*
      Returns a copy of the TPA/Array.
     *)
-    function Copy: TPointArray; Inline;
+    function Clone: TPointArray; Inline;
     
-    
+
+    (*
+     Returns a (partial) copy of the TPA/Array.
+    *)
+    procedure CopyTo(var Arr:TPointArray; Start, Stop: Integer); Inline;
+
+
     (*
      Returns the last item
     *)
@@ -142,21 +148,9 @@ type
     
     
     (*
-     Move each point in the list by X,Y.
+     Offset each point in the list by X,Y.
     *)
     procedure Offset(X,Y:Integer); Inline;
-    
-    
-    (*
-     Get the value of the given Index.
-    *)
-    function Get(Index:Integer): TPoint; Inline;
-
-    
-    (*
-     Set the value of the given Index.
-    *)
-    procedure Put(Index:Integer; const Item: TPoint); Inline;
     
     
     (*
@@ -233,7 +227,7 @@ end;
 procedure TPointList.Free;
 begin
   _High := -1;
-  _Length := LMINSIZE;
+  _Length := 0;
   SetLength(_Arr, 0);
 end;
 
@@ -303,19 +297,26 @@ begin
 end;
 
 
-function TPointList.GetData: TPointArray;
+function TPointList.Clone: TPointArray;
 begin
-  Result := _Arr;
+  if _High > -1 then
+  begin
+    Result := Copy(_Arr, 0, _High + 1);
+    SetLength(Result, _High+1);
+  end;
 end;
 
 
-function TPointList.Copy: TPointArray;
+procedure TPointList.CopyTo(var Arr:TPointArray; Start, Stop: Integer);
 var i:Integer;
 begin
-  SetLength(Result, _High+1);
-  //Move(_Arr[0], Result[0], _High * SizeOf(TPoint));
-  for i := 0 to _High do   //Hard copy.
-    Result[i] := _Arr[i];
+  if _High > -1 then
+  begin
+    Stop := Min(Stop, _High);
+    SetLength(Arr, (Stop - Start) + 1);
+    for i := Start to Stop do
+      Arr[i-Start] := _Arr[i];
+  end;
 end;
 
 
@@ -465,26 +466,30 @@ begin
 end;
 
 
-procedure TPointList.Offset(X, Y:Integer);
+procedure TPointList.Offset(X,Y:Integer);
 var i: Integer;
 begin
   if (_High = -1) then Exit;
-  for i:=0 to _High do begin
+  for i:=0 to _High do
+  begin
     _Arr[i].x := _Arr[i].x + X;
     _Arr[i].y := _Arr[i].y + Y;
   end;
 end;
 
 
+
+//Private - Use: TPointList.Point[Index];
 function TPointList.Get(Index:Integer): TPoint;
 begin
   Result := _Arr[Index];
 end;
 
 
-procedure TPointList.Put(Index:Integer; const Item: TPoint);
+//Private - Use: TPointList.Point[Index] := Value;
+procedure TPointList.Put(Index:Integer; const Value: TPoint);
 begin
-  _Arr[Index] := Item;
+  _Arr[Index] := Value;
 end;
 
 

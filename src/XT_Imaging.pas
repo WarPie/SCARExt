@@ -22,7 +22,7 @@ procedure ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMe
 implementation
 
 uses
-  XT_Collection, XT_Points, XT_ColorMath;
+  XT_Matrix, XT_Points, XT_ColorMath;
 
 
 {*

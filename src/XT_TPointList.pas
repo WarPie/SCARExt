@@ -242,8 +242,10 @@ end;
 
 procedure TPointList.CheckResize(NewSize:Integer);
 begin
-  if NewSize < 512 then
+  if NewSize < LMINSIZE then
   begin
+    if  _Length > LMINSIZE then
+      SetLength(_Arr, LMINSIZE);
     _Length := LMINSIZE;
     _High := NewSize;
     Exit;
@@ -280,14 +282,13 @@ procedure TPointList.CheckResizeLow(NewSize:Integer);
 begin
   if NewSize < LMINSIZE then
   begin
-    if  _Length <> LMINSIZE then
-    begin
-      _Length := LMINSIZE;
-      SetLength(_Arr, _Length);
-    end;
+    if  _Length > LMINSIZE then
+      SetLength(_Arr, LMINSIZE);
+    _Length := LMINSIZE;
     _High := NewSize;
     Exit;
   end;
+
   _High := NewSize;
   if ((_Length div 2) > _High) then
   begin

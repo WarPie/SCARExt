@@ -186,8 +186,8 @@ begin
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
   AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');
-  AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DIntArray;');
-  AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray;');
+  AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte; Invert:Boolean): T2DIntArray;');
+  AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Invert:Boolean; Method:TThreshMethod; C:Integer): T2DIntArray;');
   AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray;');
   AddCommand(@ImCEdges,       'function XT_ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray;');
   AddCommand(@ImResize,       'procedure XT_ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMethod);');
@@ -197,8 +197,9 @@ begin
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
   AddCommand(@RandomCenterTPA,'function XT_RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray;');
   AddCommand(@RandomTIA,      'function XT_RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray;');
+  AddCommand(@GaussPt,        'function XT_GaussPt(MeanPt:TPoint; StdDev:Extended): TPoint;');
+  AddCommand(@GaussPtEx,      'function XT_GaussPtEx(MeanPt:TPoint; StdDev, MaxDev:Extended): TPoint;');
 
-  
   //** Faster SetLength for PS **//
   AddCommand(@SetLengthTPA,  'procedure SetLengthTPA(var Arr: TPointArray; NewSize:Integer);');
   AddCommand(@SetLengthTIA,  'procedure SetLengthTIA(var Arr: TIntArray; NewSize:Integer);');

@@ -11,8 +11,8 @@ uses
 
 function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
-function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte): T2DIntArray; StdCall;
-function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
+function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte; Invert:Boolean): T2DIntArray; StdCall;
+function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Invert:Boolean; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
 function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
 function ImCEdges(const ImgArr: T2DIntArray; MinDiff: Integer): TPointArray; StdCall;
 procedure ImResize(var ImgArr:T2DIntArray; NewW, NewH: Integer; Method:TResizeMethod); StdCall;
@@ -134,22 +134,21 @@ end;
     Threshold: Threshold value.
     Alpha: Minvalue for result
     Beta: Maxvalue for result
+    Invert: Bellow Mean is set to Beta, rather then Alpha.
 *}
-function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta: Byte): T2DIntArray; StdCall;
+function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta: Byte; Invert:Boolean): T2DIntArray; StdCall;
 var
   W,H,x,y,i:Integer;
   Tab: Array [0..256] of Byte;
 begin
   if Alpha >= Beta then Exit;
-  if Alpha > Beta then begin
-    X := Beta;
-    Beta := Alpha;
-    Alpha := X;
-  end;
+  if Alpha > Beta then ExchBt(Alpha, Beta); 
+
   W := Length(ImgArr[0]);
   H := Length(ImgArr);
   SetLength(Result, H,W);
   
+  if Invert then ExchBt(Alpha, Beta); 
   for i:=0 to (Threshold-1) do Tab[i] := Alpha;
   for i:=Threshold to 255 do Tab[i] := Beta;
   Dec(W); 
@@ -157,7 +156,7 @@ begin
   
   for y:=0 to H do
     for x:=0 to W do
-      Result[y][x] := Tab[ColorToGrayL(ImgArr[y][x])];
+      Result[y][x] := Tab[ColorToGray(ImgArr[y][x])];
 end;
 
 
@@ -168,10 +167,11 @@ end;
  @params:
     Alpha: Minvalue for result
     Beta: Maxvalue for result
+    Invert: Bellow Mean is set to Beta, rather then Alpha.
     Method: TM_Mean or TM_MinMax
     C: Substract or add to the mean.
 *}
-function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
+function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Invert:Boolean; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
 var
   W,H,x,y,i:Integer;
   Color,IMin,IMax: Byte;
@@ -180,16 +180,14 @@ var
   Tab: Array [0..256] of Byte;   
 begin
   if Alpha >= Beta then Exit;
-  if Alpha > Beta then begin
-    X := Beta;
-    Beta := Alpha;
-    Alpha := X;
-  end;
+  if Alpha > Beta then ExchBt(Alpha, Beta); 
+  
   W := Length(ImgArr[0]);
   H := Length(ImgArr);
   SetLength(Result, H,W);
   SetLength(Temp, H,W);
-  Dec(W); Dec(H);
+  Dec(W); 
+  Dec(H);
   
   //Finding the threshold - While at it convert image to grayscale.
   Threshold := 0;
@@ -202,7 +200,7 @@ begin
         Counter := 0;
         for x:=0 to W do
         begin
-          Color := ColorToGrayL(ImgArr[y][x]);
+          Color := ColorToGray(ImgArr[y][x]);
           Temp[y][x] := Color;
           Counter := Counter + Color;
         end;
@@ -215,12 +213,12 @@ begin
     //Mean of Min and Max values
     TM_MinMax:
     begin
-      IMin := ColorToGrayL(ImgArr[0][0]);
+      IMin := ColorToGray(ImgArr[0][0]);
       IMax := IMin;
       for y:=0 to H do
         for x:=0 to W do
         begin
-          Color := ColorToGrayL(ImgArr[y][x]);
+          Color := ColorToGray(ImgArr[y][x]);
           Temp[y][x] := Color;
           if Color < IMin then
             IMin := Color
@@ -233,6 +231,7 @@ begin
   end;
   
   Threshold := Max(0, Min(Threshold, 255)); //In range 0..255
+  if Invert then ExchBt(Alpha, Beta);
   for i:=0 to (Threshold-1) do Tab[i] := Alpha;
   for i:=Threshold to 255 do Tab[i] := Beta;  
   for y:=0 to H do

@@ -352,8 +352,8 @@ begin
   ToCol := Min(ToCol, High(Mat[0]));
   H := High(Mat);
   SetLength(Result, H+1, ToCol-FromCol+1);
-  for x:=FromCol to ToCol do
-    for y:=0 to H do
+  for y:=0 to H do
+    for x:=FromCol to ToCol do
       Result[y][x] := Mat[y][x];
 end;
 
@@ -368,8 +368,8 @@ begin
   W := High(Mat[0]);
   ToRow := Min(ToRow, High(Mat));
   SetLength(Result, ToRow-FromRow+1, W+1);
-  for x:=0 to W do
-    for y:=FromRow to ToRow do
+  for y:=FromRow to ToRow do
+    for x:=0 to W do
       Result[y][x] := Mat[y][x];
 end;
 
@@ -386,8 +386,8 @@ begin
   x2 := Min(x2, W);
   y2 := Min(y2, H);
   SetLength(Result, y2-y1+1, x2-x1+1);
-  for x:=x1 to x2 do
-    for y:=y1 to y2 do
+  for y:=y1 to y2 do
+    for x:=x1 to x2 do
       Result[y][x] := Mat[y][x];
 end;
 

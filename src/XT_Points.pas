@@ -560,8 +560,8 @@ begin
 
   SetLength(Result, (Area.X2+1)*(Area.Y2+1));
   i := 0;
-  for x:=0 to Area.X2 do
-    for y:=0 to Area.Y2 do
+  for y:=0 to Area.Y2 do
+    for x:=0 to Area.X2 do
       if Matrix[y][x] <> True then
       begin
         Result[i] := Point(x+Area.x1,y+Area.y1);
@@ -681,8 +681,8 @@ begin
 
   SetLength(Result, C);
   idx := 0;
-  for x := 0 to Area.X2 do
-    for y := 0 to Area.Y2 do
+  for y := 0 to Area.Y2 do
+    for x := 0 to Area.X2 do
       if Matrix[y][x] = True then
       begin
         Result[idx] := Point((X+Area.X1), (Y+Area.Y1));

@@ -255,8 +255,8 @@ begin
   H := High(ImgArr);
   SetLength(TPA, W*H);
   j := 0;
-  for x:=1 to W do
-    for y:=1 to H do
+  for y:=1 to H do
+    for x:=1 to W do
       if ImgArr[y][x] > 0 then
       begin
         TPA[j].x := x;
@@ -292,8 +292,8 @@ begin
   SetLength(Result, QSize+1);
   
   Len := 0;
-  for X:=0 to Width do
-    for Y:=0 to Height do 
+  for Y:=0 to Height do 
+    for X:=0 to Width do
     begin
       Hit := False;
       if ((X+1) < Width) then

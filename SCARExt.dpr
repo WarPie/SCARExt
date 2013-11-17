@@ -101,9 +101,10 @@ begin
 
 
   //** SimpleOCR.pas **//
-  AddCommand(@ImGetTextEx, 'function XT_ImGetTextEx(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
+  AddCommand(@ImGetText,   'function XT_ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
+  AddCommand(@ImGetTextEx, 'function XT_ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
 
-  
+
   //** DensityMap.pas **//
   AddCommand(@DensityMap,       'function XT_DensityMap(const TPA:TPointArray; Radius, Passes:Integer): T2DExtArray;');
   AddCommand(@DensityMapNormed, 'function XT_DensityMapNormed(const TPA:TPointArray; Radius, Passes, Beta:Integer): T2DIntArray;');
@@ -250,7 +251,7 @@ end;
 
 function GetTypeCount: Integer; StdCall;
 begin
-  Result := 5;
+  Result := 6;
 end;
 
 function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
@@ -275,6 +276,10 @@ begin
     4:begin
         sType := 'TChars';
         sTypeDef := 'Array of T2DIntArray;';
+      end;
+    5:begin
+        sType := 'TCharsArray';
+        sTypeDef := 'Array of TChars;';
       end;
   else
     x := -1;

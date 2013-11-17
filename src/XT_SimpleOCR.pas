@@ -9,7 +9,8 @@ interface
 uses
   XT_Types, Math, SysUtils;
 
-function ImGetTextEx(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
 
 
 //--------------------------------------------------
@@ -68,7 +69,7 @@ begin
 end;
 
 
-function ImGetTextEx(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
 var
   i,j:Integer;
   PixHits,char,hit:Integer; 
@@ -95,7 +96,7 @@ begin
     
     if SpacePositions[i] then 
       Result := Result + ' ';
-    if PixHits < TextPixTol then    
+    if (PixHits < TextPixTol) then    
       Result := Result + Chr(Char)
     else
       Result := Result + ''; //Unkown char  
@@ -104,5 +105,48 @@ begin
   SetLength(SpacePositions, 0);
 end;  
 
+
+(* 
+ Taking multple fonts and using that to try to read some text.
+*) 
+function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+var
+  i,j,k,highFonts:Integer;
+  PixHits,char,hit:Integer; 
+  Chars: TChars; 
+begin
+  Chars := ExtractChars(ImgArr, MinSpace);
+  HighFonts := High(Fonts);
+  Result := '';  
+  for i:=0 to High(Chars) do
+  begin
+    Char := 0;
+    PixHits := 10000000;   
+    
+    for k:=0 to HighFonts do
+    begin
+      for j:=0 to high(Fonts[k]) do
+      begin          
+        if High(fonts[k][j]) < 0 then Continue;
+        hit := CompareChars(chars[i], Fonts[k][j]); 
+        if (hit < PixHits) then 
+        begin 
+          PixHits := hit;
+          Char := j;
+        end;
+      end;
+    end;  
+    
+    if SpacePositions[i] then 
+      Result := Result + ' ';
+
+    if (PixHits < TextPixTol) then
+      Result := Result + Chr(Char)
+    else
+      Result := Result + ''; //Unkown char  
+  end;
+  
+  SetLength(SpacePositions, 0);
+end; 
 
 end.

@@ -239,6 +239,11 @@ begin
 end;
 
 
+
+//-----------------------------------------------------------------------
+// OCR
+//-----------------------------------------------------------------------
+
 {*
  ....
 *}
@@ -300,7 +305,8 @@ var
 begin
   ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
   XT_ImFindColorTolEx(ImgArr, TPA, TextColor, ColorTol);
-
+  XT_SortTPAByRow(TPA);
+  
   Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
   for i:=0 to High(Rows) do
   begin 
@@ -310,7 +316,7 @@ begin
     SetLength(ImgArr, 0);  
     ImgArr := XT_IntMatrixNil(W,H);
     XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
-    try RowText := XT_ImGetTextEx(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
+    try RowText := XT_ImGetText(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
     except Continue;
     end;
     if (i = 0) then 
@@ -324,7 +330,7 @@ end;
 {*
  ....
 *}
-function XT_GetTextDynamicAt(Area:TBox; Font:TChars; MinSpace, PixelNoiseTol, RowSpace:Integer; ThreshMod:Integer; Invert:Boolean; Range: String): String;
+function XT_GetTextDynAt(Area:TBox; Font:TChars; MinSpace, PixelNoiseTol, RowSpace:Integer; ThreshMod:Integer; Invert:Boolean; Range: String): String;
 var
   ImgArr:T2DIntArray;
   TPA: TPointArray;
@@ -336,6 +342,7 @@ begin
   ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
   ImgArr := XT_ImThresholdAdaptive(ImgArr, 0, clRed,Invert, TM_Mean, ThreshMod);
   XT_ImFindColorTolEx(ImgArr, TPA, clRed, 1);
+  XT_SortTPAByRow(TPA);
   
   Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
   for i:=0 to High(Rows) do
@@ -346,7 +353,7 @@ begin
     SetLength(ImgArr, 0);  
     ImgArr := XT_IntMatrixNil(W,H);
     XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
-    try RowText := XT_ImGetTextEx(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
+    try RowText := XT_ImGetText(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
     except Continue;
     end;
     if (i = 0) then 
@@ -355,3 +362,82 @@ begin
       Result := Result + #13#10 + RowText;
   end;
 end;
+
+
+
+{*
+ ....
+*}
+function XT_GetTextAtEx(Area:TBox; Fonts:Array of TChars; MinSpace, TextColor, ColorTol, PixelNoiseTol, RowSpace:Integer; Range: String): String;
+var
+  ImgArr:T2DIntArray;
+  TPA: TPointArray;
+  Rows: T2DPointArray;
+  W,H,i:Integer;
+  RowText: String;
+  B:TBox;
+begin
+  ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
+  XT_ImFindColorTolEx(ImgArr, TPA, TextColor, ColorTol);
+  XT_SortTPAByRow(TPA);
+  
+  Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
+  for i:=0 to High(Rows) do
+  begin 
+    B := TPABounds(Rows[i]);  
+    W := B.X2 - B.X1 + 1;
+    H := B.Y2 - B.Y1 + 1;
+    SetLength(ImgArr, 0);  
+    ImgArr := XT_IntMatrixNil(W,H);
+    XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
+    try RowText := XT_ImGetTextEx(ImgArr, Fonts, MinSpace, PixelNoiseTol, Range)
+    except Continue;
+    end;
+    if (i = 0) then 
+      Result := RowText
+    else 
+      Result := Result + #13#10 + RowText;
+  end;
+end;
+
+
+{*
+ ....
+*}
+function XT_GetTextDynAtEx(Area:TBox; Fonts:Array of TChars; MinSpace, PixelNoiseTol, RowSpace:Integer; ThreshMod:Integer; Invert:Boolean; Range: String): String;
+var
+  ImgArr:T2DIntArray;
+  TPA: TPointArray;
+  Rows: T2DPointArray;
+  W,H,i:Integer;
+  RowText: String; 
+  B:TBox;
+begin
+  ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
+  ImgArr := XT_ImThresholdAdaptive(ImgArr, 0, clRed,Invert, TM_Mean, ThreshMod);
+  XT_ImFindColorTolEx(ImgArr, TPA, clRed, 1);
+  XT_SortTPAByRow(TPA);
+  
+  Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
+  for i:=0 to High(Rows) do
+  begin 
+    B := TPABounds(Rows[i]);  
+    W := B.X2 - B.X1 + 1;
+    H := B.Y2 - B.Y1 + 1;
+    SetLength(ImgArr, 0);  
+    ImgArr := XT_IntMatrixNil(W,H);
+    XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
+    try RowText := XT_ImGetTextEx(ImgArr, Fonts, MinSpace, PixelNoiseTol, Range)
+    except Continue;
+    end;
+    if (i = 0) then 
+      Result := RowText
+    else 
+      Result := Result + #13#10 + RowText;
+  end;
+end;
+
+
+
+
+

@@ -28,7 +28,8 @@ begin
     Result := Result + '['+ TIAToStr(ATIA[i]) + ']'#13;
   end;
   Result := Result +']'#13;
-end;  
+end;
+
   
 {*
  Copy the client area as bitmap from X->Y2
@@ -49,6 +50,25 @@ end;
 
 
 {*
+  Get all pixels from an area defined by TBox..
+*}
+function XT_GetClientColors(Area:TBox): TIntArray;
+var
+  BMP: TSCARBitmap;
+  TPA: TPointArray;
+begin
+  if ((Area.X1 <= Area.X2) and (Area.Y1 <= Area.Y2)) then
+  begin
+    BMP := GetClient.CaptureEx(Area.X1, Area.Y1, Area.X2, Area.Y2);
+    TPA := TPAFromBox(Box(0,0, Area.X2-Area.X1, Area.Y2-Area.Y1));
+    Result := BMP.GetPixels(TPA);
+    BMP.Free;
+    SetLengthTPA(TPA, 0);
+  end;
+end;
+
+
+{*
  Get all the pixels on the bitmap as a Matrix (ImgArray)..
 *}
 function XT_Bmp2Matrix(bmp: TSCARBitmap; DoFree:Boolean): T2DIntArray;
@@ -58,10 +78,10 @@ var
 begin  
   TPA := TPAFromBox(Box(0, 0, BMP.Width-1, BMP.Height-1));
   TIA := BMP.GetPixels(TPA);
-  Result := XT_TIAToMat(TIA, BMP.Width,  BMP.Height); 
-  if DoFree then BMP.Free; 
-  SetLengthTIA(TIA, 0);
   SetLengthTPA(TPA, 0);
+  Result := XT_MatFromTIA(TIA, BMP.Width,  BMP.Height); 
+  SetLengthTIA(TIA, 0);
+  if DoFree then BMP.Free; 
 end;
 
 
@@ -110,7 +130,6 @@ begin
   SetLengthATIA(Mat, 0);
 end;
 
-
 {*
  Loads a bitmap directly in to a matrix.
 *}
@@ -149,6 +168,20 @@ begin
   Img.Free;
 end;
 
+
+{*
+ Set all the pixels from an Matrix (ImgArray) to the bitmap..
+*}
+procedure XT_DebugMatrix(Matrix:T2DIntArray);
+var 
+  bmp:TSCARBitmap;
+begin
+  bmp := TSCARBitmap.Create('');
+  XT_BmpSetData(bmp, Matrix, True);
+  DebugBitmap(bmp);
+  Bmp.Clear(0);
+  Bmp.Free;
+end;
 
 
 (*
@@ -190,6 +223,7 @@ begin
 end;
 
 
+
 {*
  .... Will probably be removed..
 *}
@@ -202,4 +236,122 @@ begin
   Img := XT_Bmp2Matrix(XT_ClientBMP(0,0,W,H), True);
   Result := XT_ImCEdges(Img, MinDiff);
   SetLengthATIA(Img, 0);
+end;
+
+
+{*
+ ....
+*}
+function XT_LoadFont(FontPath:String): TChars;
+var
+  path:String;
+  TPA:TPointArray;
+  i:Integer;
+  tmp:TSCARBitmap;  
+  B:TBox;
+begin
+  tmp := TSCARBitmap.Create('');
+  SetLength(Result, 256);
+  if not(DirectoryExists(FontPath)) then
+  begin
+    WriteLn('UNABLE TO LOAD FONT: "' + FontPath + '". Path does not exist.'); 
+    Exit;
+  end;
+  for i:=0 to 255 do
+  begin      
+    path := FontPath+'\'+IntToStr(ord(i)) +'.bmp'; 
+    if FileExists(path) then
+    begin
+      tmp.LoadFromBmp(path); 
+      Result[i] := XT_ImThreshold(XT_Bmp2Matrix(tmp, False),127,0,255,False);
+      XT_ImFindColorTolEx(Result[i],TPA,255,1);
+      SetLength(Result[i], 0);
+      B := TPABounds(TPA);
+      Result[i] := XT_IntMatrixNil((B.x2 - B.x1)+1, (B.y2 - B.y1)+1);
+      XT_IntMatrixSetPts(Result[i],TPA,255, Point(B.x1,B.y1));
+
+      tmp.SetSize(1,1);
+      tmp.Clear(0);
+    end;
+  end;
+end;
+
+
+{*
+ ....
+*}
+procedure XT_FreeFont(Font:TChars);
+begin
+  SetLength(Font, 0);
+end;
+
+
+{*
+ ....
+*}
+function XT_GetTextAt(Area:TBox; Font:TChars; MinSpace, TextColor, ColorTol, PixelNoiseTol, RowSpace:Integer; Range: String): String;
+var
+  ImgArr:T2DIntArray;
+  TPA: TPointArray;
+  Rows: T2DPointArray;
+  W,H,i:Integer;
+  RowText: String;
+  B:TBox;
+begin
+  ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
+  XT_ImFindColorTolEx(ImgArr, TPA, TextColor, ColorTol);
+
+  Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
+  for i:=0 to High(Rows) do
+  begin 
+    B := TPABounds(Rows[i]);  
+    W := B.X2 - B.X1 + 1;
+    H := B.Y2 - B.Y1 + 1;
+    SetLength(ImgArr, 0);  
+    ImgArr := XT_IntMatrixNil(W,H);
+    XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
+    try RowText := XT_ImGetTextEx(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
+    except Continue;
+    end;
+    if (i = 0) then 
+      Result := RowText
+    else 
+      Result := Result + #13#10 + RowText;
+  end;
+end;
+
+
+{*
+ ....
+*}
+function XT_GetTextDynamicAt(Area:TBox; Font:TChars; MinSpace, PixelNoiseTol, RowSpace:Integer; ThreshMod:Integer; Invert:Boolean; Range: String): String;
+var
+  ImgArr:T2DIntArray;
+  TPA: TPointArray;
+  Rows: T2DPointArray;
+  W,H,i:Integer;
+  RowText: String; 
+  B:TBox;
+begin
+  ImgArr := XT_BMP2Matrix(GetClient.CaptureEx(Area.X1,Area.Y1,Area.X2,Area.Y2), True);
+  ImgArr := XT_ImThresholdAdaptive(ImgArr, 0, clRed,Invert, TM_Mean, ThreshMod);
+  XT_ImFindColorTolEx(ImgArr, TPA, clRed, 1);
+  
+  Rows := XT_ClusterTPAEx(TPA, Area.x2 - Area.x1 + 1, RowSpace, True);
+  for i:=0 to High(Rows) do
+  begin 
+    B := TPABounds(Rows[i]);  
+    W := B.X2 - B.X1 + 1;
+    H := B.Y2 - B.Y1 + 1;
+    SetLength(ImgArr, 0);  
+    ImgArr := XT_IntMatrixNil(W,H);
+    XT_IntMatrixSetPts(ImgArr, Rows[i], $FFFFFF, Point(B.x1,B.y1));
+    try RowText := XT_ImGetTextEx(ImgArr, Font, MinSpace, PixelNoiseTol, Range)
+    except Continue;
+    end;
+    if (i = 0) then 
+      Result := RowText
+    else 
+      Result := Result + #13#10 + RowText;
+  end;
 end;

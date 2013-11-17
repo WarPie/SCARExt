@@ -14,7 +14,7 @@ function TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray; StdCal
 function TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray; StdCall;
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
-
+function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;
 
 //--------------------------------------------------
 implementation
@@ -152,6 +152,31 @@ begin
   end;
 end;
 
+
+{*
+  Finds the amount of different indices, by comparing each index in "Arr1" to each index in "Arr2".
+*}
+function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;
+var h,i:integer;
+begin
+  H := Min(High(Arr1), High(Arr2));
+  Result := Abs(High(Arr1) - High(Arr2));
+  for I:=0 to H do
+    if Arr1[I] = Arr2[I] then
+      Inc(Result);
+      
+  if InPercent then begin
+    H := Max(High(Arr1), High(Arr2));
+    Result := Trunc((Result / H) * 100);
+  end;
+  
+  if Inversed then begin
+    case InPercent of 
+      True : Result := (100-Result);
+      False: Result := (Max(High(Arr1), High(Arr2)) - Result);
+    end;
+  end;
+end;
 
 end.
 

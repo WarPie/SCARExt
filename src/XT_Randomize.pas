@@ -11,8 +11,6 @@ uses
 function RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray; StdCall;  
 function RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray; StdCall;
 function RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray; StdCall;
-function GaussPt(MeanPt:TPoint; Stddev:Extended): TPoint; StdCall;
-function GaussPtEx(MeanPt:TPoint; StdDev, MaxDev:Extended): TPoint; StdCall;
 
 
 //--------------------------------------------------
@@ -63,36 +61,6 @@ begin
   for i:=0 to Amount-1 do
     Result[i] := RandomRange(Low,Hi);
 end; 
-
-
-(*
-  Generates a "gaussian" (normally distributed) TPoint using Box–Muller transform. 
-*)
-function GaussPt(MeanPt:TPoint; Stddev:Extended): TPoint; StdCall;
-var Theta,Scale:Extended;
-begin
-  Scale := Stddev * Sqrt(-2 * Ln(1 - Random));
-  Theta := 2 * PI * Random;
-  Result.x := Round(MeanPt.x + Scale * Cos(theta));
-  Result.y := Round(MeanPt.y + Scale * Sin(theta));
-end;
-
-
-(*
-  Generates a "gaussian" (normally distributed) TPoint using Box–Muller transform.
-  Takes an extra parameter to keep points within a given range (maxDev) / "Removes peaks".
-*)
-function GaussPtEx(MeanPt:TPoint; StdDev, MaxDev:Extended): TPoint; StdCall;
-var Theta,Scale:Extended;
-begin 
-  if MaxDev < 1 then MaxDev := 1;
-  Scale := Stddev * Sqrt(-2 * Ln(1 - Random));
-  while Scale > MaxDev do
-    Scale := Stddev * Sqrt(-2 * Ln(1 - Random));
-  Theta := 2 * PI * Random;
-  Result.x := Round(MeanPt.x + Scale * Cos(theta));
-  Result.y := Round(MeanPt.y + Scale * Sin(theta));
-end;
 
 
 end.

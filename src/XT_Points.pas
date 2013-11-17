@@ -22,7 +22,8 @@ function TPACenter(const TPA: TPointArray; Method: TCenterMethod; Inside:Boolean
 function TPAExtremes(const TPA:TPointArray): TPointArray; StdCall; 
 function TPABBox(const TPA:TPointArray): TPointArray; StdCall;
 procedure TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer); StdCall;
-procedure TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
+procedure TPAFilter(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
+procedure ATPAFilter(var ATPA: T2DPointArray; MinLength, MinW, MinH, MaxW, MaxH: Integer; Align:Boolean); StdCall;
 procedure ReverseTPA(var TPA: TPointArray); StdCall;
 procedure MoveTPA(var TPA: TPointArray; SX,SY:Integer); StdCall;
 procedure TPARemoveDupes(var TPA: TPointArray); StdCall;
@@ -401,7 +402,7 @@ end;
   `From` is used if the shape is not at the same position as the TPA, it will
   add or subsract the values (x,y) to/from the points in TPA.
 *}
-procedure TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
+procedure TPAFilter(var TPA: TPointArray; const Shape:TPointArray; const From:TPoint); StdCall;
 var 
   i,j,size,W,H,x,y:Integer;
   Matrix:T2DBoolArray;
@@ -450,6 +451,39 @@ begin
     end;
   SetLength(TPA, j);
 end;
+
+
+{*
+  Filter the ATPA by it's dimensions and Length.
+  if Align is set, then the W will always be the longest side: It will be rotation insensitive!
+  ^ Uses AlignTPA.
+*}
+procedure ATPAFilter(var ATPA: T2DPointArray; MinLength, MinW, MinH, MaxW, MaxH: Integer; Align:Boolean); StdCall;
+var 
+  i,j,H:Integer;
+  b:TBox;
+  a:Extended;
+  TPA:TPointArray;
+begin
+  H := High(ATPA);
+  j := 0;
+  for i:=0 to H do
+    if Length(ATPA[i]) >= MinLength then
+    begin
+      if Align then TPA := AlignTPA(ATPA[i], AM_BBox, a)
+      else          TPA := ATPA[i];
+      B := TPABounds(TPA);
+      if (B.Width >= MinW) and (B.Height >= MinH) and 
+         (B.Width <= MaxW) and (B.Height <= MaxH) then
+      begin
+        ATPA[j] := ATPA[i];
+        Inc(j);
+      end;
+    end;
+  SetLength(ATPA, j);
+end;
+
+
 
 
 {*

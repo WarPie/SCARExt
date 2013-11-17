@@ -23,6 +23,7 @@ uses
   XT_Randomize,
   XT_Points,
   XT_Finder,
+  XT_SimpleOCR,
   XT_CSpline,
   XT_Morphology,
   XT_DensityMap,
@@ -81,8 +82,9 @@ begin
   AddCommand(@TEACombinations, 'function XT_TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray;');
   AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
   AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
+  AddCommand(@TIAMatches,'function XT_TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;');
 
-
+  
   //** Sorting.pas **//
   AddCommand(@SortTIA, 'procedure XT_SortTIA(var Arr: TIntArray);');
   AddCommand(@SortTEA, 'procedure XT_SortTEA(var Arr: TExtArray);');
@@ -96,21 +98,26 @@ begin
   AddCommand(@ImFindColorTolEx,    'function XT_ImFindColorTolEx(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, Tol:Integer): Boolean;');
   AddCommand(@ImFindColorTolExLCH, 'function XT_ImFindColorTolExLCH(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
   AddCommand(@ImFindColorTolExLAB, 'function XT_ImFindColorTolExLAB(const ImgArr:T2DIntArray; var TPA:TPointArray; Color, ColorTol, LightTol:Integer): Boolean;');
-  
+
+
+  //** SimpleOCR.pas **//
+  AddCommand(@ImGetTextEx, 'function XT_ImGetTextEx(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
+
   
   //** DensityMap.pas **//
   AddCommand(@DensityMap,       'function XT_DensityMap(const TPA:TPointArray; Radius, Passes:Integer): T2DExtArray;');
   AddCommand(@DensityMapNormed, 'function XT_DensityMapNormed(const TPA:TPointArray; Radius, Passes, Beta:Integer): T2DIntArray;');
   AddCommand(@TPADensitySort,   'procedure XT_TPADensitySort(var Arr: TPointArray; Radius, Passes:Integer);');
   
-  
+
   //** Points.pas **//
   AddCommand(@ScalePoint,      'function XT_ScalePoint(const Center, Pt:TPoint; Radius:Integer): TPoint;');
   AddCommand(@SumTPA,          'function XT_SumTPA(Arr: TPointArray): TPoint;');
   AddCommand(@TPASplitAxis,    'procedure XT_TPASplitAxis(const TPA: TPointArray; var X:TIntArray; var Y:TIntArray);');
   AddCommand(@TPAJoinAxis,     'procedure XT_TPAJoinAxis(const X:TIntArray; const Y:TIntArray; var TPA:TPointArray);');
-  AddCommand(@TPAExtract,      'procedure XT_TPAExtract(var TPA: TPointArray; const Shape:TPointArray; const TopLeft:TPoint);');
+  AddCommand(@TPAFilter,       'procedure XT_TPAFilter(var TPA: TPointArray; const Shape:TPointArray; const TopLeft:TPoint);');
   AddCommand(@TPAFilterBounds, 'procedure XT_TPAFilterBounds(var TPA: TPointArray; x1,y1,x2,y2:Integer);');
+  AddCommand(@ATPAFilter,      'procedure XT_ATPAFilter(var ATPA: T2DPointArray; MinLength, MinW, MinH, MaxW, MaxH: Integer; Align:Boolean);');
   AddCommand(@TPAExtremes,     'function XT_TPAExtremes(const TPA:TPointArray): TPointArray;');
   AddCommand(@TPABBox,         'function XT_TPABBox(const TPA:TPointArray): TPointArray;');
   AddCommand(@TPABBox,         'function XT_TPABoundingBox(const TPA:TPointArray): TPointArray;'); //Alias ^
@@ -152,7 +159,7 @@ begin
   AddCommand(@TPAExtractShape, 'function XT_TPAExtractShape(const PTS:TPointArray; Distance, EstimateRad:Integer): TPointArray;');
   
   
-  //** Mophology.pas **//
+  //** Morphology.pas **//
   AddCommand(@TPASkeleton, 'function XT_TPASkeleton(const TPA:TPointArray; FMin,FMax:Integer): TPointArray;');
   AddCommand(@TPAReduce,   'function XT_TPAReduce(const TPA:TPointArray; FMin,FMax, Iterations:Integer): TPointArray;');
   AddCommand(@TPAExpand,   'function XT_TPAExpand(const TPA:TPointArray; Iterations:Integer): TPointArray;');
@@ -197,9 +204,8 @@ begin
   AddCommand(@RandomTPA,      'function XT_RandomTPA(Amount:Integer; MinX,MinY,MaxX,MaxY:Integer): TPointArray;');
   AddCommand(@RandomCenterTPA,'function XT_RandomCenterTPA(Amount:Integer; CX,CY,RadX,RadY:Integer): TPointArray;');
   AddCommand(@RandomTIA,      'function XT_RandomTIA(Amount:Integer; Low,Hi:Integer): TIntArray;');
-  AddCommand(@GaussPt,        'function XT_GaussPt(MeanPt:TPoint; StdDev:Extended): TPoint;');
-  AddCommand(@GaussPtEx,      'function XT_GaussPtEx(MeanPt:TPoint; StdDev, MaxDev:Extended): TPoint;');
-
+  
+  
   //** Faster SetLength for PS **//
   AddCommand(@SetLengthTPA,  'procedure SetLengthTPA(var Arr: TPointArray; NewSize:Integer);');
   AddCommand(@SetLengthTIA,  'procedure SetLengthTIA(var Arr: TIntArray; NewSize:Integer);');
@@ -244,7 +250,7 @@ end;
 
 function GetTypeCount: Integer; StdCall;
 begin
-  Result := 4;
+  Result := 5;
 end;
 
 function GetTypeInfo(x: Integer; var sType, sTypeDef: AnsiString): Integer; StdCall; Export;
@@ -265,6 +271,10 @@ begin
     3:begin
         sType := 'TResizeMethod';
         sTypeDef := '(RM_Nearest, RM_Bilinear, RM_Bicubic);';
+      end;
+    4:begin
+        sType := 'TChars';
+        sTypeDef := 'Array of T2DIntArray;';
       end;
   else
     x := -1;

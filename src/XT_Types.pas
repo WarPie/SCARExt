@@ -57,7 +57,8 @@ type
   TThreshMethod = (TM_Mean, TM_MinMax);
   TCenterMethod = (CM_Bounds, CM_BBox, CM_Mean, CM_Median);
   TResizeMethod = (RM_Nearest, RM_Bilinear, RM_Bicubic);
-    
+  
+  TChars = Array of T2DIntArray;  
 
 function Box(const x1,y1,x2,y2:Integer): TBox; Inline;
 function Point(const x,y:Integer): TPoint; Inline;

@@ -59,6 +59,7 @@ type
   TResizeMethod = (RM_Nearest, RM_Bilinear, RM_Bicubic);
   
   TChars = Array of T2DIntArray;  
+  TCharsArray = Array of TChars;  
 
 function Box(const x1,y1,x2,y2:Integer): TBox; Inline;
 function Point(const x,y:Integer): TPoint; Inline;

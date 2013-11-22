@@ -32,6 +32,7 @@ function MatGetRows(const Mat:T2DIntArray; FromRow, ToRow:Integer): T2DIntArray;
 function MatGetArea(const Mat:T2DIntArray; x1,y1,x2,y2:Integer): T2DIntArray; StdCall;
 function MatFromTIA(const TIA:TIntArray; Width,Height:Integer): T2DIntArray; StdCall;
 procedure PadMatrix(var Matrix:T2DIntArray; HPad, WPad:Integer); StdCall;
+function FloodFillMatrixEx(ImgArr:T2DIntArray; const Start:TPoint; EightWay:Boolean): TPointArray; StdCall;
 procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inline;
 
 
@@ -39,7 +40,7 @@ procedure DrawMatrixLine(var Mat:T2DIntArray; P1, P2: TPoint; Val:Integer); Inli
 implementation
 
 uses 
-  XT_Points;
+  XT_Points, XT_TPointList;
 
 
 {*
@@ -428,6 +429,52 @@ begin
   
   SetLength(Matrix, 0);
   Matrix := Temp;
+end;
+
+
+{*
+ FloodFills the ImgArr, and returns the floodfilled points.
+*}
+function FloodFillMatrixEx(ImgArr:T2DIntArray; const Start:TPoint; EightWay:Boolean): TPointArray; StdCall;
+var
+  color,i,x,y,W,H,fj:Integer;
+  face:TPointArray;
+  Queue,Res: TPointList;
+begin
+  W := High(ImgArr[0]);
+  H := High(ImgArr);
+
+  fj := 3;
+  if EightWay then fj := 7;
+  SetLength(Face, fj+1);
+
+  Queue.Init;
+  Res.Init;
+  Color := ImgArr[Start.y][Start.x];
+  Queue.Append(Start);
+  Res.Append(Start);
+  while Queue.NotEmpty do
+  begin
+    GetAdjacent(Face, Queue.FastPop, EightWay);
+    for i:=0 to fj do
+    begin
+      x := face[i].x;
+      y := face[i].y;
+      if ((x >= 0) and (y >= 0) and (x <= W) and (y <= H)) then
+      begin
+        if ImgArr[y][x] = color then
+        begin
+          ImgArr[y][x] := -1;
+          Queue.Append(face[i]);
+          Res.Append(face[i]);
+        end;
+      end;
+    end;
+  end;
+  Queue.Free;
+  SetLength(Face, 0);
+  Result := Res.Clone;
+  Res.Free;
 end;
 
 

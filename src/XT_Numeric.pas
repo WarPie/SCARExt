@@ -14,7 +14,8 @@ function TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray; StdCal
 function TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray; StdCall;
 procedure MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer); Inline; StdCall;
 procedure MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended); Inline; StdCall;
-function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;
+function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer; StdCall;
+function LogscaleTIA(const Freq:TIntArray; Scale: Integer): TIntArray; StdCall;
 
 //--------------------------------------------------
 implementation
@@ -156,13 +157,13 @@ end;
 {*
   Finds the amount of different indices, by comparing each index in "Arr1" to each index in "Arr2".
 *}
-function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;
-var h,i:integer;
+function TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer; StdCall;
+var H,i:integer;
 begin
   H := Min(High(Arr1), High(Arr2));
   Result := Abs(High(Arr1) - High(Arr2));
   for I:=0 to H do
-    if Arr1[I] = Arr2[I] then
+    if (Arr1[I] <> Arr2[I]) then
       Inc(Result);
       
   if InPercent then begin
@@ -177,6 +178,53 @@ begin
     end;
   end;
 end;
+
+
+{*
+ Given a TIA with a range of numbers it scales each element in a logarithmic pattern:
+ EG:
+ > Freq := [0,1,2,3,4]
+ > Scale := 2;
+ > Result := [0,0,0,0,0,0,0,0,0,0, 1,1,1,1,1, 2,2,2, 3,3, 4];
+ It will suffer a bit from rounding errors..
+*}
+function LogscaleTIA(const Freq:TIntArray; Scale: Integer): TIntArray; StdCall;
+var
+  Size,i,j,H: Integer;
+  step,L:Integer;
+begin
+  H := High(Freq);
+  if H = -1 then Exit;
+  if (Scale <= 1) or (H = 0) then 
+  begin 
+    Result := Copy(Freq);
+    Exit;
+  end;
+  Size := Scale * (H+1);
+  j := 0;
+  i := H;
+  Step := Size;
+  SetLength(Result, Step);
+  L := 0;
+  while (i > 0) do
+  begin
+    Inc(j);
+    if L >= Step then begin
+      step := step+step;
+      SetLength(Result, step);
+    end;
+    Result[L] := Freq[H-i];
+    if j >= size then
+    begin
+      Size := Round(Size / Scale);
+      j := 0;
+      Dec(i);
+    end;
+    Inc(L);
+  end;
+  SetLength(Result, L);
+end;
+
 
 end.
 

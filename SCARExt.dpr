@@ -80,10 +80,11 @@ begin
   AddCommand(@SumTEA,    'function XT_SumTEA(const Arr: TExtArray): Extended;');
   AddCommand(@TIACombinations, 'function XT_TIACombinations(const Arr: TIntArray; Seq:Integer): T2DIntArray;');
   AddCommand(@TEACombinations, 'function XT_TEACombinations(const Arr: TExtArray; Seq:Integer): T2DExtArray;');
-  AddCommand(@MinMaxTIA, 'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
-  AddCommand(@MinMaxTEA, 'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
-  AddCommand(@TIAMatches,'function XT_TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;');
-
+  AddCommand(@MinMaxTIA,   'procedure XT_MinMaxTIA(const Arr: TIntArray; var Min:Integer; var Max: Integer);');
+  AddCommand(@MinMaxTEA,   'procedure XT_MinMaxTEA(const Arr: TExtArray; var Min:Extended; var Max: Extended);');
+  AddCommand(@TIAMatches,  'function XT_TIAMatches(const Arr1, Arr2:TIntArray; InPercent, Inversed:Boolean): Integer;');
+  AddCommand(@LogscaleTIA, 'function XT_LogscaleTIA(const Freq:TIntArray; Scale: Integer): TIntArray;');
+  
   
   //** Sorting.pas **//
   AddCommand(@SortTIA, 'procedure XT_SortTIA(var Arr: TIntArray);');
@@ -189,7 +190,7 @@ begin
   AddCommand(@MatGetArea,    'function XT_MatGetArea(const Mat:T2DIntArray; X1,Y1,X2,Y2:Integer): T2DIntArray;');
   AddCommand(@MatFromTIA,    'function XT_MatFromTIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
   AddCommand(@PadMatrix,     'procedure XT_PadMatrix(var Matrix:T2DIntArray; HPad,WPad:Integer);');
-
+  AddCommand(@FloodFillMatrixEx, 'function XT_FloodFillMatrixEx(ImgArr:T2DIntArray; const Start:TPoint; EightWay:Boolean): TPointArray;');
   
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');

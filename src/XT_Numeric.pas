@@ -185,8 +185,7 @@ end;
  EG:
  > Freq := [0,1,2,3,4]
  > Scale := 2;
- > Result := [0,0,0,0,0,0,0,0,0,0, 1,1,1,1,1, 2,2,2, 3,3, 4];
- It will suffer a bit from rounding errors..
+ > Result := [0, 1,1, 2,2,2,2, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4];
 *}
 function LogscaleTIA(const Freq:TIntArray; Scale: Integer): TIntArray; StdCall;
 var
@@ -195,32 +194,28 @@ var
 begin
   H := High(Freq);
   if H = -1 then Exit;
-  if (Scale <= 1) or (H = 0) then 
-  begin 
+  if (Scale <= 1) or (H = 0) then
+  begin
     Result := Copy(Freq);
     Exit;
   end;
-  Size := Scale * (H+1);
-  j := 0;
-  i := H;
-  Step := Size;
+  Step := 1;
   SetLength(Result, Step);
+  Size := 1;
   L := 0;
-  while (i > 0) do
-  begin
-    Inc(j);
-    if L >= Step then begin
-      step := step+step;
-      SetLength(Result, step);
+  i := 0;
+  for i:=0 to H do
+  begin 
+    for j:=0 to Size-1 do
+    begin 
+      if L >= Step then begin
+        step := step+step;
+        SetLength(Result, step);
+      end;
+      Result[L] := Freq[i];
+      Inc(L);
     end;
-    Result[L] := Freq[H-i];
-    if j >= size then
-    begin
-      Size := Round(Size / Scale);
-      j := 0;
-      Dec(i);
-    end;
-    Inc(L);
+    Size := Size * Scale; 
   end;
   SetLength(Result, L);
 end;

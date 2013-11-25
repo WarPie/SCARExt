@@ -533,7 +533,7 @@ begin;
   H := High(TPA);
   if (H <= 0) then Exit;
   b := TPABounds(TPA);
-  Matrix := BoolMatrixNil((b.X2 - b.X1) + 1, (b.Y2 - b.Y1) + 1);
+  SetLength(Matrix, (b.Y2 - b.Y1)+1,  (b.X2 - b.X1)+1);
   j := 0;
   for i:=0 to H do
     if Matrix[(TPA[i].Y - b.Y1)][(TPA[i].X - b.X1)] <> True then
@@ -586,7 +586,7 @@ begin
   Area := TPABounds(TPA);
   Area.X2 := (Area.X2-Area.X1);
   Area.Y2 := (Area.Y2-Area.Y1);
-  Matrix := BoolMatrixNil(Area.X2+1, Area.Y2+1);
+  SetLength(Matrix, Area.Y2+1, Area.X2+1);
   
   H := High(TPA);
   for i:=0 to H do
@@ -702,7 +702,7 @@ begin
   Area.X2 := (Area.X2-Area.X1);
   Area.Y2 := (Area.Y2-Area.Y1);
   H := High(TPA);
-  Matrix := BoolMatrixNil(Area.X2+1, Area.Y2+1);
+  SetLength(Matrix, Area.Y2+1, Area.X2+1);
 
   C := 0;
   for I:=0 to H do
@@ -745,7 +745,7 @@ begin
   if RemoveDupes then
   begin
     Area := TPABounds(Result);
-    Matrix := BoolMatrixNil((Area.X2-Area.X1)+1, (Area.Y2-Area.Y1)+1);
+    SetLength(Matrix, (Area.Y2-Area.Y1)+1, (Area.X2-Area.X1)+1);
     j := 0;
     for I:=Low(Result) to High(Result) do
     begin
@@ -1080,7 +1080,7 @@ begin
   Area := TPABounds(TPA);
   Area.x2 := (Area.x2 - Area.x1) + 1;
   Area.y2 := (Area.y2 - Area.y1) + 1;
-  Matrix := BoolMatrixNil(Area.x2+1, Area.y2+1);
+  SetLength(Matrix, Area.y2+1, Area.x2+1);
   H := High(TPA);
   SetLength(Result, ((Area.x2+1)*(Area.y2+1))+H+1);
 
@@ -1150,7 +1150,7 @@ begin
   Area.X2 := (Area.X2 - Area.X1) + 1;  //Width
   Area.Y2 := (Area.Y2 - Area.Y1) + 1;  //Height
 
-  Matrix := IntMatrixNil(Area.X2+1, Area.Y2+1);
+  Matrix := NewMatrix(Area.X2+1, Area.Y2+1);
 
   start := Point(Area.X2, Area.Y2);
   for i:=0 to H do
@@ -1223,7 +1223,7 @@ begin
   Area.X1 := Area.X1 - 1;
   Area.Y1 := Area.Y1 - 1;
 
-  Matrix := IntMatrixNil(Area.X2+1, Area.Y2+1);
+  Matrix := NewMatrix(Area.X2+1, Area.Y2+1);
 
   start := Point(Area.X2, Area.Y2);
   for i:=0 to H do

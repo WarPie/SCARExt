@@ -5,12 +5,14 @@ Unit XT_SimpleOCR;
  For more info see: Copyright.txt
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 //SCARs GetTextAtEx was running to slow, and missing tolerance for pixel error.
+//This is just something I wrote very fast, so it's very prototype-ish.
+//Might be expanded on over time.
 interface
 uses
   XT_Types, Math, SysUtils;
 
-function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
-function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
 
 
 //--------------------------------------------------
@@ -22,7 +24,7 @@ var
   SpacePositions: TBoolArray;
   
 
-function ExtractChars(ImgArr:T2DIntArray; MinSpace:Integer): TChars;
+function ExtractChars(ImgArr:T2DIntArray; MinCharSpace, MinSpace:Integer): TChars;
 var
   i,j,H:Integer;
   TPA: TPointArray;
@@ -31,7 +33,7 @@ var
 begin
   ImgArr := ImThresholdAdaptive(ImgArr, 0, 255, False, TM_Mean, 0);
   ImFindColorTolEx(ImgArr, TPA, 255, 1);
-  ATPA := ClusterTPAEx(TPA, 1,10, True);
+  ATPA := ClusterTPAEx(TPA, MinCharSpace,40, True);
   H := High(ATPA); 
   SetLength(SpacePositions, H+1);
   SetLength(Result, H+1);   
@@ -69,13 +71,13 @@ begin
 end;
 
 
-function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetText(ImgArr:T2DIntArray; Font:TChars; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
 var
   i,j:Integer;
   PixHits,char,hit:Integer; 
   Chars: TChars; 
 begin
-  Chars := ExtractChars(ImgArr, MinSpace);
+  Chars := ExtractChars(ImgArr, MinCharSpace, MinSpace);
 
   Result := '';  
   for i:=0 to High(Chars) do
@@ -109,13 +111,13 @@ end;
 (* 
  Taking multple fonts and using that to try to read some text.
 *) 
-function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
+function ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString; StdCall;
 var
   i,j,k,highFonts:Integer;
   PixHits,char,hit:Integer; 
   Chars: TChars; 
 begin
-  Chars := ExtractChars(ImgArr, MinSpace);
+  Chars := ExtractChars(ImgArr, MinCharSpace, MinSpace);
   HighFonts := High(Fonts);
   Result := '';  
   for i:=0 to High(Chars) do

@@ -102,8 +102,8 @@ begin
 
 
   //** SimpleOCR.pas **//
-  AddCommand(@ImGetText,   'function XT_ImGetText(ImgArr:T2DIntArray; Font:TChars; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
-  AddCommand(@ImGetTextEx, 'function XT_ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
+  AddCommand(@ImGetText,   'function XT_ImGetText(ImgArr:T2DIntArray; Font:TChars; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
+  AddCommand(@ImGetTextEx, 'function XT_ImGetTextEx(ImgArr:T2DIntArray; Fonts:TCharsArray; MinCharSpace, MinSpace, TextPixTol: Integer; Range:AnsiString): AnsiString;');
 
 
   //** DensityMap.pas **//
@@ -168,18 +168,11 @@ begin
 
   
   //** Matrix.pas **//
-  AddCommand(@IntMatrix,       'function XT_IntMatrix(W,H, Init:Integer): T2DIntArray;');
-  AddCommand(@IntMatrixNil,    'function XT_IntMatrixNil(W,H:Integer): T2DIntArray;');
-  AddCommand(@IntMatrixSetPts, 'procedure XT_IntMatrixSetPts(var Matrix:T2DIntArray; const Pts:TPointArray; Value:Integer; const Align:TPoint);');
-  AddCommand(@BoolMatrix,      'function XT_BoolMatrix(W,H:Integer; Init:Boolean): T2DBoolArray;');
-  AddCommand(@BoolMatrixNil,   'function XT_BoolMatrixNil(W,H:Integer): T2DBoolArray;');
-  AddCommand(@BoolMatrixSetPts,'procedure XT_BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint);');
-  
-  AddCommand(@TPAToIntMatrix,     'function XT_TPAToIntMatrix(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray;');
-  AddCommand(@TPAToIntMatrixNil,  'function XT_TPAToIntMatrixNil(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray;');
-  AddCommand(@TPAToBoolMatrix,    'function XT_TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray;');
-  AddCommand(@TPAToBoolMatrixNil, 'function XT_TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DIntArray;');
-  
+  AddCommand(@NewMatrixEx,   'function XT_NewMatrixEx(W,H, Init:Integer): T2DIntArray;');
+  AddCommand(@NewMatrix,     'function XT_NewMatrix(W,H:Integer): T2DIntArray;');
+  AddCommand(@MatrixSetTPA,  'procedure XT_MatrixSetTPA(var Matrix:T2DIntArray; const TPA:TPointArray; Value:Integer; const Offset:TPoint);');
+  AddCommand(@TPAToMatrixEx, 'function XT_TPAToMatrixEx(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray;');
+  AddCommand(@TPAToMatrix,   'function XT_TPAToMatrix(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray;');
   AddCommand(@NormalizeMat,  'function XT_NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray;');
   AddCommand(@MatGetValues,  'function XT_MatGetValues(const Mat:T2DIntArray; const Indices:TPointArray): TIntArray;');
   AddCommand(@MatCombine,    'procedure XT_MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer);');
@@ -191,10 +184,13 @@ begin
   AddCommand(@MatFromTIA,    'function XT_MatFromTIA(const Arr:TIntArray; Width,Height:Integer): T2DIntArray;');
   AddCommand(@PadMatrix,     'procedure XT_PadMatrix(var Matrix:T2DIntArray; HPad,WPad:Integer);');
   AddCommand(@FloodFillMatrixEx, 'function XT_FloodFillMatrixEx(ImgArr:T2DIntArray; const Start:TPoint; EightWay:Boolean): TPointArray;');
-  
+
+
   //** Imaging.pas **//
   AddCommand(@ImBlurFilter,   'function XT_ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray;');
   AddCommand(@ImMedianFilter, 'function XT_ImMedianFilter(ImgArr: T2DIntArray; Block:Integer):T2DIntArray;');
+  AddCommand(@ImBrighten,     'function XT_ImBrighten(ImgArr:T2DIntArray; Amount:Extended): T2DIntArray;');
+  AddCommand(@ImEnhance,      'function XT_ImEnhance(ImgArr:T2DIntArray; Enhancement:Byte; C:Extended): T2DIntArray;');
   AddCommand(@ImThreshold,    'function XT_ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte; Invert:Boolean): T2DIntArray;');
   AddCommand(@ImThresholdAdaptive, 'function XT_ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Invert:Boolean; Method:TThreshMethod; C:Integer): T2DIntArray;');
   AddCommand(@ImFindContours, 'function XT_ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray;');

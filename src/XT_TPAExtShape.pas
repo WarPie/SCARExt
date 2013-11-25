@@ -93,9 +93,8 @@ begin
   H := High(TPA);
   SetLength(adj, 8);
   
-  Matrix := IntMatrixNil(Area.X2+1,Area.Y2+1);
-
-  start := Point(Area.X2, Area.Y2);
+  Matrix := NewMatrix(Area.X2+1,Area.Y2+1);
+  Start := Point(Area.X2, Area.Y2);
   for i:=0 to H do
   begin
     x := (TPA[i].x-Area.X1);

@@ -11,6 +11,8 @@ uses
 
 function ImBlurFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
 function ImMedianFilter(ImgArr: T2DIntArray; Block:Integer): T2DIntArray; StdCall;
+function ImBrighten(ImgArr:T2DIntArray; Amount:Extended): T2DIntArray; StdCall;
+function ImEnhance(ImgArr:T2DIntArray; Enhancement:Byte; C:Extended): T2DIntArray; StdCall;
 function ImThreshold(const ImgArr:T2DIntArray; Threshold, Alpha, Beta:Byte; Invert:Boolean): T2DIntArray; StdCall;
 function ImThresholdAdaptive(const ImgArr:T2DIntArray; Alpha, Beta: Byte; Invert:Boolean; Method:TThreshMethod; C:Integer): T2DIntArray; StdCall;
 function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
@@ -128,6 +130,86 @@ end;
 
 
 {*
+ Brightens the image or darkens if negative "amount" is given.
+*}
+function ImBrighten(ImgArr:T2DIntArray; Amount:Extended): T2DIntArray; StdCall;
+var
+  W,H,x,y,R,G,B:Integer;
+  cH,cS,cV:Extended;
+begin
+  W := Length(ImgArr[0]);
+  H := Length(ImgArr);
+  SetLength(Result, H,W);
+
+  Dec(W); 
+  Dec(H);
+  for y:=0 to H do
+    for x:=0 to W do
+    begin
+      ColorToHSV(ImgArr[y][x], cH,cS,cV);
+      cV := cV+Amount;
+      if (cV < 0.0) then cV := 0
+      else if (cV > 1.0) then cV := 1.0;
+      HSVToRGB(cH,cS,cV, R,G,B);
+      Result[y][x] := (R) or (G shl 8) or (B shl 16);
+    end;
+end;
+
+
+{*
+ Enhances colors in the image by a given value.
+ @params:
+   Enhancement: How much to substraact or add to the color.
+   C: Based on the "mid"-value (127), if color is bellow then it gets weakened,
+      if it's above then it gets enhanced.
+*}
+function ImEnhance(ImgArr:T2DIntArray; Enhancement:Byte; C:Extended): T2DIntArray; StdCall;
+var
+  W,H,x,y,R,G,B:Integer;
+  mid: Single;
+begin
+  W := Length(ImgArr[0]);
+  H := Length(ImgArr);
+  SetLength(Result, H,W);
+
+  Mid := 127 * C;
+  Dec(W);
+  Dec(H);
+  for y:=0 to H do
+    for x:=0 to W do
+    begin
+      ColorToRGB2(ImgArr[y][x], R,G,B);
+
+      if R > mid then begin
+        R := R + Enhancement;
+        if (R > 255) then R:=255;
+      end else begin
+        R := R - Enhancement;
+        if (R < 0) then R:=0;
+      end;
+      
+      if G > mid then begin 
+        G := G + Enhancement;
+        if (G > 255) then G:=255;
+      end else begin
+        G := G - Enhancement;
+        if (G < 0) then G:=0;
+      end;
+      
+      if B > mid then begin
+        B := B + Enhancement;
+        if (B > 255) then B:=255;
+      end else begin
+        B := B - Enhancement;
+        if (B < 0) then B:=0;
+      end;
+      
+      Result[y][x] := (R) or (G shl 8) or (B shl 16);
+    end;
+end;
+
+
+{*
  Given a threshold this function checks all the colors, and them who goes bellow `Threshold` will be set to `Alpha`
  the colors above or equal to the threshold will be set to `Beta`.
  @params:
@@ -156,7 +238,7 @@ begin
   
   for y:=0 to H do
     for x:=0 to W do
-      Result[y][x] := Tab[ColorToGray(ImgArr[y][x])];
+      Result[y][x] := Tab[ColorToGrayL(ImgArr[y][x])];
 end;
 
 
@@ -200,7 +282,7 @@ begin
         Counter := 0;
         for x:=0 to W do
         begin
-          Color := ColorToGray(ImgArr[y][x]);
+          Color := ColorToGrayL(ImgArr[y][x]);
           Temp[y][x] := Color;
           Counter := Counter + Color;
         end;
@@ -213,7 +295,7 @@ begin
     //Mean of Min and Max values
     TM_MinMax:
     begin
-      IMin := ColorToGray(ImgArr[0][0]);
+      IMin := ColorToGrayL(ImgArr[0][0]);
       IMax := IMin;
       for y:=0 to H do
         for x:=0 to W do
@@ -244,6 +326,8 @@ end;
 {
   ImgArr is treated as a binary array, so 0s will be left alone, and anything above 0 will be checked.
   You can use this with XT_Threshold or XT_ThresholdApdative.
+  
+  This will probably be changed to something more "proper".
 }
 function ImFindContours(const ImgArr:T2DIntArray; Outlines:Boolean): T2DPointArray; StdCall;
 var
@@ -348,9 +432,7 @@ begin
   begin
     x := Trunc(ratioX * j);
     y := Trunc(ratioY * i);
-    Result[i][j] := (ImgArr[y][x] and $FF) or 
-                    ((ImgArr[y][x] shr 8) and $FF) shl 8 or 
-                    ((ImgArr[y][x] shr 16) and $FF) shl 16;
+    Result[i][j] := ImgArr[y][x];
   end;
 end;
 
@@ -409,6 +491,7 @@ end;
 
 
 //Used in bicubic interpolation.
+//I could reqrite it to function without this, and gain some speed, but...
 function _ImGetColor(ImgArr:T2DIntArray; W,H, X,Y, C:Integer): Byte; Inline;
 begin
   Result := 0;
@@ -423,6 +506,9 @@ end;
 (*
  BICUBIC: This got slower then expected, also worse result then expected...
           Kinda get that it's not faster, no "deep" optimizations are used.
+          
+          It would probably be better if I converted the image to CIE-LAB first..
+          That would requires some changes to the formula tho..
 *)
 function ResizeMat_BICUBIC(ImgArr:T2DIntArray; NewW, NewH: Integer): T2DIntArray;
 var
@@ -437,12 +523,7 @@ begin
   ratioX := (W-1) / NewW;
   ratioY := (H-1) / NewH;
 
-  SetLengthATIA(Result, NewH);
-  for i:=0 to NewH-1 do    
-  begin
-    SetLengthTIA(Result[i], NewW); 
-  end;
-  
+  SetLength(Result, NewH, NewW);
   SetLength(C, 4);
   SetLength(Chan, 3);
   Dec(NewH);

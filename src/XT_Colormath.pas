@@ -6,7 +6,7 @@ Unit XT_ColorMath;
 [=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=}
 interface
 uses
-  XT_Types, Math, SysUtils;
+  XT_Types, XT_Math, Math, SysUtils;
 
 const
   XYZ_Pow: array[0..255] of Extended =
@@ -31,13 +31,15 @@ const
   
 function __ICbrt(x:Single): Single; Inline;
 procedure ColorToRGB(Color:Integer; var R,G,B:Byte); Inline;
+procedure ColorToRGB2(Color:Integer; var R,G,B:Integer); Inline;
 function RGBToColor(R,G,B:Byte): Integer; Inline;
 function RGBIntToColor(R,G,B:Integer): Integer; Inline;
 function ColorToGray(Color:Integer): Byte; Inline;
 function ColorToGrayL(Color:Integer): Byte; Inline;
 procedure ColorToLAB(color:Integer; var L,A,B:Single); Inline;
 procedure ColorToLCH(Color:Integer; var L,C,H:Single); Inline;
-
+procedure ColorToHSV(Color:Integer; var H,S,V:Extended); Inline;
+procedure HSVToRGB(H,S,V:Extended; var R,G,B:Integer); Inline;
 
 //--------------------------------------------------
 implementation
@@ -69,6 +71,14 @@ begin
   B := ((color shr 16) and $FF);
 end;
 
+
+procedure ColorToRGB2(Color:Integer; var R,G,B:Integer); Inline;
+begin
+  R := (color and $FF);
+  G := ((color shr 8) and $FF);
+  B := ((color shr 16) and $FF);
+end;
+
 function RGBToColor(R,G,B:Byte): Integer; Inline;
 begin
   Result := R or G shl 8 or B shl 16;
@@ -88,11 +98,13 @@ end;
 //Grayscale - Calculated similarly to how XYZ calculates it's `Y`
 function ColorToGrayL(Color:Integer): Byte; Inline;
 begin
-  Result := Trunc((0.2126 * (Color and $FF)) +
-                  (0.7152 * ((Color shr 8) and $FF)) +
-                  (0.0722 * ((Color shr 16) and $FF)));
+  Result := Trunc((0.299 * (Color and $FF)) +
+                  (0.587 * ((Color shr 8) and $FF)) +
+                  (0.114 * ((Color shr 16) and $FF)));
 end;
 
+
+//duh...
 procedure ColorToLAB(color:Integer; var L,A,B:Single); Inline;
 var
   IR,IG,IB:Byte;
@@ -127,6 +139,7 @@ begin
 end;
 
 
+//Duh...
 procedure ColorToLCH(Color:Integer; var L,C,H:Single); Inline;
 var
   A,B: Single;
@@ -136,6 +149,101 @@ begin
   H := ArcTan2(B,A);
   if (H > 0) then H := (H / 3.1415926536) * 180
   else H := 360 - (-H / 3.1415926536) * 180;
+end;
+
+
+//HSV anyone? :P
+procedure ColorToHSV(Color:Integer; var H,S,V:Extended); Inline;
+var
+  iR,iG,iB,Rc,Gc,Bc,D,minc,maxc:Extended;
+begin
+  IR := (color and $FF) / 255;
+  IG := ((color shr 8) and $FF) / 255;
+  IB := ((color shr 16) and $FF) / 255; 
+
+  maxc := max(max(iR, iG), iB); 
+  minc := min(min(iR, iG), iB);
+
+  V := maxc;
+  if (minc = maxc) then
+  begin
+     H := 0.0;  
+     S := 0.0;
+  end else
+  begin  
+    D := maxc - minc;
+    S  := D / maxc;
+    rc := (maxc-iR) / D;
+    gc := (maxc-iG) / D;
+    bc := (maxc-iB) / D;
+    if (iR = maxc) then
+      H := bc - gc
+    else if (iG = maxc) then
+      H := 2.0 + rc - bc
+    else
+      H := 4.0 + gc - rc;  
+
+    H := Modulo(H / 6.0, 1.0);
+  end;
+end;
+
+
+//HSV anyone? :P
+procedure HSVToRGB(H,S,V:Extended; var R,G,B:Integer); Inline;
+var
+  i,f,p,q,t,vr,vg,vb:Extended;
+begin
+  vr := 0; vg := 0; vb := 0;
+  if (S = 0.0) then
+  begin
+    R := Trunc(V * 255);
+    G := Trunc(V * 255);
+    B := Trunc(V * 255);
+  end else 
+  begin
+    i := Trunc(H * 6); 
+    f := (H * 6) - i;
+    p := V * (1 - S);
+    q := V * (1 - S * f);
+    t := V * (1 - S * (1 - f)); 
+    i := Modulo(i, 6);
+    case Trunc(i) of
+      0:begin 
+          vr := v; 
+          vg := t; 
+          vb := p; 
+        end;
+      1:begin 
+          vr := q; 
+          vg := v; 
+          vb := p; 
+        end;
+      2:begin 
+          vr := p; 
+          vg := v; 
+          vb := t; 
+        end;
+      3:begin 
+          vr := p; 
+          vg := q; 
+          vb := v;    
+        end;
+      4:begin 
+          vr := t; 
+          vg := p; 
+          vb := v;    
+        end;
+      5:begin 
+          vr := v; 
+          vg := p; 
+          vb := q; 
+        end;
+    end; 
+
+    R := Trunc(vr * 255);
+    G := Trunc(vg * 255);
+    B := Trunc(vb * 255);
+  end;
 end;
 
 end.

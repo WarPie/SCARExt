@@ -10,18 +10,11 @@ uses
   XT_Types, Math;
 
 //General ----------->
-function IntMatrix(W,H,Init:Integer): T2DIntArray; StdCall;
-function IntMatrixNil(W,H:Integer): T2DIntArray; StdCall;
-function TPAToIntMatrix(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray; StdCall;
-function TPAToIntMatrixNil(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray; StdCall;
-procedure IntMatrixSetPts(var Matrix:T2DIntArray; const Pts:TPointArray; Value:Integer; const Align:TPoint); StdCall;
-function BoolMatrix(W,H:Integer;Init:Boolean): T2DBoolArray; StdCall;
-function BoolMatrixNil(W,H:Integer): T2DBoolArray; StdCall;
-function TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
-function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
-
-//Other ----------->
-procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
+function NewMatrix(W,H:Integer): T2DIntArray; StdCall;
+function NewMatrixEx(W,H,Init:Integer): T2DIntArray; StdCall;
+function TPAToMatrix(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray; StdCall;
+function TPAToMatrixEx(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray; StdCall;
+procedure MatrixSetTPA(var Matrix:T2DIntArray; const TPA:TPointArray; Value:Integer; const Offset:TPoint); StdCall;
 function NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 procedure MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer); StdCall;
 function MatGetValues(const Mat:T2DIntArray; const Indices:TPointArray): TIntArray; StdCall;
@@ -44,111 +37,18 @@ uses
 
 
 {*
- Quickly create a integer matrix of the size given my W,H, and initalize it with `init`.
-*}
-function IntMatrix(W,H,Init:Integer): T2DIntArray; StdCall;
-var X,Y:Integer;
-begin
-  SetLength(Result, H, W);
-  for Y:=0 to H-1 do
-    for X:=0 to W-1 do
-      Result[Y][X] := Init;
-end;
-
-{*
  Quickly create a integer matrix of the size given my W,H.
 *}
-function IntMatrixNil(W,H:Integer): T2DIntArray; StdCall;
+function NewMatrix(W,H:Integer): T2DIntArray; StdCall;
 begin
   SetLength(Result, H, W);
 end;
 
+  
 {*
- Quickly create a integer matrix filled with the points given by TPA, align the points to [0][0] if needed.
- Initalizes it with the given initalizer.
+ Quickly create a integer matrix of the size given my W,H, and initalize it with `init`.
 *}
-function TPAToIntMatrix(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray; StdCall;
-var
-  X,Y,Width,Height,H,i:Integer;
-  Area:TBox;
-begin
-  H := High(TPA);
-  Area := TPABounds(TPA);
-  Width := (Area.X2 - Area.X1) + 1;  //Width
-  Height := (Area.Y2 - Area.Y1) + 1;  //Height
-
-  case Align of
-    True:
-      begin
-        SetLength(Result, Height, Width);
-        for Y:=0 to Height-1 do
-          for X:=0 to Width-1 do
-            Result[Y][X] := Init;
-        for i:=0 to H do
-          Result[TPA[i].y-Area.y1][TPA[i].x-Area.x1] := Value;
-      end;
-    False:
-      begin
-        SetLength(Result, Area.Y2+1);
-        for Y:=0 to Area.Y2 do
-        begin
-          SetLength(Result[Y], Area.X2+1);
-          for X:=0 to Area.X2 do
-            Result[Y][X] := Init;
-        end;
-        for i:=0 to H do
-          Result[TPA[i].y][TPA[i].x] := Value;
-      end;
-  end;
-end;
-
-{*
- Quickly create a integer matrix filled with the points given by TPA, align the points to [0][0] if needed.
- Initalizes it with "nil".
-*}
-function TPAToIntMatrixNil(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray; StdCall;
-var
-  Y,Width,Height,H,i:Integer;
-  Area:TBox;
-begin
-  H := High(TPA);
-  Area := TPABounds(TPA);
-  Width := (Area.X2 - Area.X1) + 1;  //Width
-  Height := (Area.Y2 - Area.Y1) + 1;  //Height
-
-  case Align of
-    True:
-      begin
-        SetLength(Result, Height, Width);
-        for i:=0 to H do
-          Result[TPA[i].y-Area.y1][TPA[i].x-Area.x1] := Value;
-      end;
-    False:
-      begin
-        SetLength(Result, Area.Y2+1);
-        for Y:=0 to Area.Y2 do
-          SetLength(Result[Y], Area.X2+1);
-        for i:=0 to H do
-          Result[TPA[i].y][TPA[i].x] := Value;
-      end;
-  end;
-end;
-
-{*
- Set the matrix coords that match the given TPoints (minus `Align`) to `Value`...
-*}
-procedure IntMatrixSetPts(var Matrix:T2DIntArray; const Pts:TPointArray; Value:Integer; const Align:TPoint); StdCall;
-var i: Integer;
-begin
-  for i := 0 to High(Pts) do
-    Matrix[(Pts[i].y-Align.y)][(Pts[i].x-Align.x)] := Value;
-end;
-
-
-{*
- Quickly create a boolean matrix of the size given my W,H, and initalize it with `init`.
-*}
-function BoolMatrix(W,H:Integer;Init:Boolean): T2DBoolArray; StdCall;
+function NewMatrixEx(W,H,Init:Integer): T2DIntArray; StdCall;
 var X,Y:Integer;
 begin
   SetLength(Result, H, W);
@@ -159,20 +59,11 @@ end;
 
 
 {*
- Quickly create a boolean matrix of the size given my W,H.
-*}
-function BoolMatrixNil(W,H:Integer): T2DBoolArray; StdCall;
-begin
-  SetLength(Result, H, W);
-end;
-
-
-{*
- Quickly create a boolean matrix filled with the points given by TPA, align the points to [0][0] if needed.
+ Quickly create a integer matrix filled with the points given by TPA, align the points to [0][0] if needed.
  Initalizes it with the given initalizer.
 *}
-function TPAToBoolMatrix(const TPA:TPointArray; Init, Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
-var 
+function TPAToMatrixEx(const TPA:TPointArray; Init, Value:Integer; Align:Boolean): T2DIntArray; StdCall;
+var
   X,Y,Width,Height,H,i:Integer;
   Area:TBox;
 begin
@@ -180,7 +71,7 @@ begin
   Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
-  
+
   case Align of
     True:
       begin
@@ -206,13 +97,12 @@ begin
   end;
 end;
 
-
 {*
- Quickly create a boolean matrix filled with the points given by TPA, align the points to [0][0] if needed.
+ Quickly create a integer matrix filled with the points given by TPA, align the points to [0][0] if needed.
  Initalizes it with "nil".
 *}
-function TPAToBoolMatrixNil(const TPA:TPointArray; Value:Boolean; Align:Boolean): T2DBoolArray; StdCall;
-var 
+function TPAToMatrix(const TPA:TPointArray; Value:Integer; Align:Boolean): T2DIntArray; StdCall;
+var
   Y,Width,Height,H,i:Integer;
   Area:TBox;
 begin
@@ -220,7 +110,7 @@ begin
   Area := TPABounds(TPA);
   Width := (Area.X2 - Area.X1) + 1;  //Width
   Height := (Area.Y2 - Area.Y1) + 1;  //Height
-  
+
   case Align of
     True:
       begin
@@ -239,20 +129,21 @@ begin
   end;
 end;
 
-
 {*
  Set the matrix coords that match the given TPoints (minus `Align`) to `Value`...
 *}
-procedure BoolMatrixSetPts(var Matrix:T2DBoolArray; const Pts:TPointArray; Value:Boolean; const Align:TPoint); StdCall;
+procedure MatrixSetTPA(var Matrix:T2DIntArray; const TPA:TPointArray; Value:Integer; const Offset:TPoint); StdCall;
 var i: Integer;
 begin
-  for i := 0 to High(Pts) do
-    Matrix[(Pts[i].y-Align.y)][(Pts[i].x-Align.x)] := Value;
+  for i := 0 to High(TPA) do
+    Matrix[(TPA[i].y-Offset.y)][(TPA[i].x-Offset.x)] := Value;
 end;
 
 
 
-//---------------- OTHER -----------------
+{*
+ ...
+*}
 function NormalizeMat(const Mat:T2DIntArray; Alpha, Beta:Integer): T2DIntArray; StdCall;
 var
   x,y,H,W: Integer;
@@ -278,6 +169,9 @@ begin
 end;
 
 
+{*
+ ...
+*}
 procedure MatCombine(var Mat:T2DIntArray; const Mat2:T2DIntArray; Value:Integer); StdCall;
 var x,y,W,H:Integer;
 begin
